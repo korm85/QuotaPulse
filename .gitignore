@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# State & Local Data
+state.json
+alerts_history.json
+*.log
+/tmp/
+
+# Build & Dist
+build/
+dist/
+*.spec
+*.zip
+
+# OS & Editor
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db

@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+"""AI Quota Overlay CLI Tool."""
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+# Add project root to sys.path
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from backend.config_manager import load_config, DEFAULT_CONFIG_FILE, DEFAULT_STATE_FILE
+from backend.quota_engine import collect_all_quotas, run_daemon
+
+# ANSI Color codes
+BOLD = "\033[1m"
+DIM = "\033[2m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+RED = "\033[31m"
+CYAN = "\033[36m"
+MAGENTA = "\033[35m"
+RESET = "\033[0m"
+
+
+def format_progress_bar(pct: float, width: int = 24) -> str:
+    """Create a colored terminal progress bar."""
+    filled = int(round((pct / 100.0) * width))
+    filled = max(0, min(width, filled))
+    empty = width - filled
+
+    if pct >= 90.0:
+        bar_color = RED
+    elif pct >= 70.0:
+        bar_color = YELLOW
+    else:
+        bar_color = GREEN
+
+    return f"{bar_color}[{'█' * filled}{'░' * empty}]{RESET} {BOLD}{pct:5.1f}%{RESET}"
+
+
+def print_status_dashboard(state: dict) -> None:
+    """Render a beautiful CLI dashboard of all account quotas."""
+    print()
+    print(f"{BOLD}{CYAN}╔════════════════════════════════════════════════════════════════════════════╗{RESET}")
+    print(f"{BOLD}{CYAN}║                    AI QUOTA & RATE LIMIT DASHBOARD                         ║{RESET}")
+    print(f"{BOLD}{CYAN}╚════════════════════════════════════════════════════════════════════════════╝{RESET}")
+    print(f"{DIM}Last updated: {state.get('timestamp', 'unknown')}{RESET}")
+    print()
+
+    accounts = state.get("accounts", {})
+
+    # 1. CLAUDE ACCOUNTS
+    print(f"{BOLD}{MAGENTA}─── 🟣 CLAUDE ACCOUNTS ────────────────────────────────────────────────────────{RESET}")
+    for acc in accounts.get("claude", []):
+        name = acc.get("name", "Claude")
+        email = acc.get("email") or "Local Session"
+        plan = acc.get("plan", "UNKNOWN")
+        used = acc.get("used_pct", 0.0)
+        reset = acc.get("resets_in_human") or "N/A"
+        cost = acc.get("cost_usd", 0.0)
+        tokens = acc.get("tokens_used", 0)
+        limit = acc.get("token_limit", 0)
+        status = acc.get("status", "unknown")
+
+        bar = format_progress_bar(used)
+        print(f"  {BOLD}{name:<22}{RESET} [{plan}] {DIM}({email}){RESET}")
+        print(f"  Usage (5h window): {bar}  Resets in: {BOLD}{YELLOW}{reset:<8}{RESET}")
+        if limit > 0:
+            print(f"  Tokens: {tokens:,} / {limit:,}  |  Cost: ${cost:.2f}  |  Status: {status.upper()}")
+        else:
+            print(f"  Status: {status.upper()}  |  Cost: ${cost:.2f}")
+        print()
+
+    # 2. ANTIGRAVITY ACCOUNTS
+    print(f"{BOLD}{CYAN}─── ⚡ ANTIGRAVITY ACCOUNTS ──────────────────────────────────────────────────{RESET}")
+    for acc in accounts.get("antigravity", []):
+        name = acc.get("name", "Antigravity")
+        model = acc.get("model", "Gemini 3.7 Flash")
+        used = acc.get("used_pct", 0.0)
+        reset = acc.get("resets_in_human") or "N/A"
+        status = acc.get("status", "unknown")
+        steps = acc.get("recent_steps_count", 0)
+
+        bar = format_progress_bar(used)
+        print(f"  {BOLD}{name:<22}{RESET} Model: {CYAN}{model}{RESET}")
+        print(f"  Quota / Limits:    {bar}  Resets in: {BOLD}{YELLOW}{reset:<8}{RESET}")
+        print(f"  Recent Activity:   {steps} steps  |  Status: {status.upper()}")
+        print()
+
+    # 3. CODEX ACCOUNTS
+    print(f"{BOLD}{GREEN}─── 🟢 CODEX / OPENAI ACCOUNTS ──────────────────────────────────────────────{RESET}")
+    for acc in accounts.get("codex", []):
+        name = acc.get("name", "Codex")
+        email = acc.get("email") or "OpenAI Session"
+        plan = acc.get("plan", "CHATGPT")
+        used = acc.get("used_pct", 0.0)
+        reset = acc.get("resets_in_human") or "N/A"
+        status = acc.get("status", "unknown")
+
+        bar = format_progress_bar(used)
+        print(f"  {BOLD}{name:<22}{RESET} [{plan}] {DIM}({email}){RESET}")
+        print(f"  Rate Limit Usage:  {bar}  Resets in: {BOLD}{YELLOW}{reset:<8}{RESET}")
+        print(f"  Status:            {status.upper()}")
+        print()
+
+    # 4. CURSOR ACCOUNTS
+    print(f"{BOLD}{CYAN}─── 🖱️ CURSOR IDE ACCOUNTS ───────────────────────────────────────────────────{RESET}")
+    for acc in accounts.get("cursor", []):
+        name = acc.get("name", "Cursor")
+        email = acc.get("email") or "Cursor Session"
+        plan = acc.get("plan", "PRO")
+        used = acc.get("used_pct", 0.0)
+        reset = acc.get("resets_in_human") or "N/A"
+        status = acc.get("status", "unknown")
+        fast_u = acc.get("fast_requests_used", 0)
+        fast_l = acc.get("fast_requests_limit", 500)
+
+        bar = format_progress_bar(used)
+        print(f"  {BOLD}{name:<22}{RESET} [{plan}] {DIM}({email}){RESET}")
+        print(f"  Fast Requests:     {bar}  Resets in: {BOLD}{YELLOW}{reset:<8}{RESET}")
+        print(f"  Requests Used:     {fast_u} / {fast_l}  |  Status: {status.upper()}")
+        print()
+
+    print(f"{DIM}Top Bar Summary: {state.get('summary_text', '')}{RESET}")
+    print()
+
+
+def install_gnome_extension() -> None:
+    """Install the GNOME Shell extension into user local extensions directory."""
+    ext_uuid = "ai-quota-monitor@mishka.local"
+    target_dir = Path.home() / ".local" / "share" / "gnome-shell" / "extensions" / ext_uuid
+    source_dir = PROJECT_ROOT / "extension"
+
+    print(f"[*] Installing GNOME extension to {target_dir}...")
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    for item in source_dir.iterdir():
+        dest = target_dir / item.name
+        if item.is_dir():
+            if dest.exists():
+                shutil.rmtree(dest)
+            shutil.copytree(item, dest)
+        else:
+            shutil.copy2(item, dest)
+
+    print("[*] Enabling extension...")
+    try:
+        subprocess.run(["gnome-extensions", "enable", ext_uuid], check=False)
+        print(f"{GREEN}[✓] Extension {ext_uuid} installed and enabled!{RESET}")
+        print(f"{YELLOW}[!] If top bar doesn't update immediately, press Alt+F2, type 'r', or log out/in.{RESET}")
+    except Exception as e:
+        print(f"[!] Warning: Could not run gnome-extensions enable: {e}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="AI Quota Overlay Manager")
+    subparsers = parser.add_subparsers(dest="command", help="Command to run")
+
+    # status
+    subparsers.add_parser("status", help="Print CLI dashboard")
+
+    # json
+    subparsers.add_parser("json", help="Print JSON state")
+
+    # refresh
+    subparsers.add_parser("refresh", help="Force refresh of all quotas")
+
+    # daemon
+    daemon_p = subparsers.add_parser("daemon", help="Run monitoring daemon")
+    daemon_p.add_argument("--interval", type=int, default=60, help="Refresh interval in seconds")
+
+    # install-extension
+    subparsers.add_parser("install-extension", help="Install GNOME Shell Top Bar Extension")
+
+    # hud
+    subparsers.add_parser("hud", help="Launch desktop floating HUD window")
+
+    # topbar
+    subparsers.add_parser("topbar", help="Launch Top Bar taskbar indicator")
+
+    args = parser.parse_args()
+    action = args.command
+
+    if action in (None, "status"):
+        state = collect_all_quotas()
+        print_status_dashboard(state)
+    elif action == "json":
+        state = collect_all_quotas()
+        print(json.dumps(state, indent=2))
+    elif action == "refresh":
+        print("[*] Refreshing AI quotas...")
+        state = collect_all_quotas()
+        print(f"[✓] Done! Summary: {state.get('summary_text')}")
+    elif action == "daemon":
+        run_daemon(interval_seconds=args.interval)
+    elif action == "install-extension":
+        install_gnome_extension()
+    elif action == "topbar":
+        cmd = [sys.executable, str(PROJECT_ROOT / "hud" / "topbar_indicator.py")]
+        subprocess.run(cmd)
+    elif action == "hud":
+        hud_script = PROJECT_ROOT / "hud" / "desktop_hud.py"
+        subprocess.Popen([sys.executable, str(hud_script)])
+        print("[✓] Desktop HUD launched!")
+    else:
+        parser.print_help()
+
+
+if __name__ == "__main__":
+    main()

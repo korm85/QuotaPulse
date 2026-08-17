@@ -1,0 +1,135 @@
+/* AI Quota Monitor GNOME Shell Extension Styles */
+
+.ai-quota-panel-btn {
+    font-weight: 600;
+    padding: 0 8px;
+}
+
+.ai-quota-topbar-box {
+    spacing: 6px;
+}
+
+.ai-quota-pill {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.ai-quota-pill-ok {
+    color: #4ade80;
+}
+
+.ai-quota-pill-warning {
+    color: #facc15;
+    background-color: rgba(250, 204, 21, 0.15);
+}
+
+.ai-quota-pill-critical {
+    color: #f87171;
+    background-color: rgba(248, 113, 113, 0.2);
+}
+
+/* Dropdown Menu styling */
+.ai-quota-menu-box {
+    padding: 12px;
+    min-width: 380px;
+    spacing: 12px;
+}
+
+.ai-quota-header-box {
+    spacing: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.ai-quota-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #f3f4f6;
+}
+
+.ai-quota-section-title {
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #9ca3af;
+    margin-top: 4px;
+}
+
+.ai-quota-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 10px 12px;
+    spacing: 6px;
+}
+
+.ai-quota-card-header {
+    spacing: 8px;
+}
+
+.ai-quota-account-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: #f9fafb;
+}
+
+.ai-quota-badge {
+    font-size: 10px;
+    font-weight: bold;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #e5e7eb;
+}
+
+.ai-quota-progress-container {
+    height: 8px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.ai-quota-progress-fill {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #3b82f6;
+}
+
+.ai-quota-progress-fill-ok {
+    background-color: #22c55e;
+}
+
+.ai-quota-progress-fill-warning {
+    background-color: #eab308;
+}
+
+.ai-quota-progress-fill-critical {
+    background-color: #ef4444;
+}
+
+.ai-quota-info-row {
+    font-size: 11px;
+    color: #9ca3af;
+    spacing: 8px;
+}
+
+.ai-quota-reset-highlight {
+    font-weight: bold;
+    color: #fde047;
+}
+
+.ai-quota-footer-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.08);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.ai-quota-footer-btn:hover {
+    background-color: rgba(255, 255, 255, 0.16);
+}

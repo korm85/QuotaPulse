@@ -1,0 +1,8 @@
+{
+  "uuid": "ai-quota-monitor@mishka.local",
+  "name": "AI Quota & Rate Limit Monitor",
+  "description": "Live desktop & top bar quota, usage percentages, and reset countdowns for Antigravity, Claude, and Codex accounts.",
+  "shell-version": [ "45", "46", "47", "48", "49", "50" ],
+  "url": "https://github.com/Gavan-AI-Labs-LTD/ai-quota-overlay",
+  "version": 1
+}
