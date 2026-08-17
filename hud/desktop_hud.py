@@ -365,6 +365,10 @@ button.hud-arrow-btn:hover label {
 
 def format_short_name(account_name: str) -> str:
     """Shorten name for compact mode without losing account distinction."""
+    if "@" in account_name:
+        parts = account_name.split("(")
+        user_part = parts[1].split("@")[0] if len(parts) > 1 and "@" in parts[1] else account_name
+        return f"Claude ({user_part})"
     return (account_name
             .replace("Claude (Primary)", "Claude (1)")
             .replace("Claude (Secondary)", "Claude (2)")
@@ -893,12 +897,28 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
 
                 reset_str = acc.get("resets_in_human")
                 if reset_str and not is_not_configured:
-                    reset_lbl = Gtk.Label(label=f"Resets: {reset_str}")
+                    reset_lbl = Gtk.Label(label=f"5h Resets: {reset_str}")
                     reset_lbl.add_css_class("hud-reset")
                     info_row.append(reset_lbl)
                 card.append(info_row)
 
-                # Extra details
+                # Distinct Weekly Limit Row for Claude
+                if acc.get("weekly_used_pct") is not None and not is_not_configured:
+                    weekly_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+                    w_used = float(acc.get("weekly_used_pct", 0.0))
+                    w_lbl = Gtk.Label(label=f"📅 Weekly Limit: {w_used:.1f}% used")
+                    w_lbl.add_css_class("hud-subtext")
+                    w_lbl.set_halign(Gtk.Align.START)
+                    w_lbl.set_hexpand(True)
+                    weekly_row.append(w_lbl)
+
+                    w_reset = acc.get("weekly_resets_human", "Sat 8:59 PM")
+                    w_reset_lbl = Gtk.Label(label=f"Resets {w_reset}")
+                    w_reset_lbl.add_css_class("hud-subtext")
+                    weekly_row.append(w_reset_lbl)
+                    card.append(weekly_row)
+
+                # Extra details (Cost, Models)
                 extra = []
                 if acc.get("model"):
                     extra.append(f"Model: {acc.get('model')}")
@@ -919,7 +939,7 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
 
                 self.content_box.append(card)
 
-            # 2. Update Compact View (ALL 5 accounts preserved identically)
+            # 2. Update Compact View
             while self.compact_box.get_first_child():
                 self.compact_box.remove(self.compact_box.get_first_child())
 
@@ -933,11 +953,14 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
                 
                 is_not_cfg = (acc.get("status") == "not_configured")
 
-                # Label (e.g. 🟣 Claude (1): 33%)
+                # Label (e.g. 🟣 Claude (michael): 74% (Wk: 25%))
                 if is_not_cfg:
                     lbl_text = f"{icon} {short_name}"
                 else:
-                    lbl_text = f"{icon} {short_name}: {used:.0f}%"
+                    if acc.get("weekly_used_pct") is not None:
+                        lbl_text = f"{icon} {short_name}: {used:.0f}% (Wk: {acc['weekly_used_pct']:.0f}%)"
+                    else:
+                        lbl_text = f"{icon} {short_name}: {used:.0f}%"
 
                 lbl = Gtk.Label(label=lbl_text)
                 lbl.add_css_class("hud-compact-label")

@@ -126,10 +126,10 @@ def auto_discover_system(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]
         })
         fallback_chain.append("claude_primary")
 
-    # 2. Claude Secondary (CLI Profile)
+    # 2. Claude Secondary (Explicit CLI Profile only)
     for sec_name in [".claude-secondary", ".claude-2"]:
         cl_sec = home / sec_name
-        if cl_sec.exists():
+        if cl_sec.exists() and (cl_sec / ".credentials.json").exists():
             detected_accounts["claude"].append({
                 "id": "claude_secondary",
                 "name": "Claude (Secondary)",
@@ -141,18 +141,6 @@ def auto_discover_system(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]
             })
             if "claude_secondary" not in fallback_chain:
                 fallback_chain.append("claude_secondary")
-            break
-
-    # 3. Claude Desktop App
-    for dt_candidate in [appdata / "Claude", home / ".config" / "Claude", home / "AppData" / "Roaming" / "Claude"]:
-        if dt_candidate.exists() and (dt_candidate / "plan-usage-history.json").exists():
-            detected_accounts["claude"].append({
-                "id": "claude_desktop",
-                "name": "Claude (Desktop)",
-                "enabled": True,
-                "type": "claude_desktop",
-                "config_dir": str(dt_candidate)
-            })
             break
 
     # 4. Antigravity CLI & IDE
