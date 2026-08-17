@@ -1,93 +1,115 @@
-# AI Quota Overlay ⚡
+# QuotaPulse ⚡
+### Never get cut off by AI limits mid-thought.
 
-A real-time desktop overlay, floating HUD, and top bar taskbar monitor for AI coding agents.
+**QuotaPulse** is a lightweight, always-on-top desktop overlay and taskbar widget that monitors your live AI rate limits, token usage, and reset countdowns in real-time.
 
-Keep track of your live token usage, rate limits, costs, and rolling window reset countdowns across **Claude**, **Google Antigravity**, **OpenAI Codex (ChatGPT)**, and **Cursor IDE** directly from your desktop.
-
----
-
-![AI Quotas Demo](https://raw.githubusercontent.com/MichaelGavanAI/ai-quota-overlay/main/hud/preview.png) *(Preview)*
+Whether you're deep in coding flow or managing multiple accounts, QuotaPulse gives you instant visibility into your remaining quota across **Claude**, **Google Antigravity**, **OpenAI Codex / ChatGPT**, and **Cursor IDE** without having to open a browser.
 
 ---
 
-## 🚀 Key Features
+## 📸 Screenshots
 
-- **🖥️ Floating Desktop HUD**:
-  - Always-on-top translucent dark glass widget.
-  - Resizable and draggable on both Wayland and X11.
-  - **1-Click Compact / Full View**: Switch between compact chip rows and detailed usage cards with progress bars.
-- **📊 Top Bar Taskbar Multi-Chips**:
-  - Direct, glanceable chips embedded in the top bar: `[🟣 CL: 52%]` `[⚡ AG: 31%]` `[🟢 CX: 0%]`.
-  - Color-coded per service with live percentages and real-time reset timers.
-- **🔍 Zero-Config Auto-Detection**:
-  - **Claude**: Auto-detects **Claude Code** session logs and **Claude Desktop** Electron local storage.
-  - **Google Antigravity**: Auto-detects active CLI conversations, step counts, and Gemini 5-hour rolling pool limits.
-  - **OpenAI Codex / ChatGPT**: Auto-queries live rate limits and plan tiers using local session tokens.
-  - **Cursor IDE**: Reads local session tokens to track Fast Requests (`used / 500`) and monthly billing cycles.
-- **🔔 Smart Quota Alerts**:
-  - Native system notifications (`notify-send` on Linux / Windows Action Center Toasts) when any model reaches **≥ 80%** (Warning) or **≥ 90%** (Critical).
-  - Anti-spam debounce prevents repeated alerts within the same reset window.
-- **🪟 Cross-Platform Support**:
-  - Native GTK4 & GNOME StatusNotifier integration on Ubuntu / Linux.
-  - Standalone PyQt6 frameless HUD and 1-click batch launcher on Windows 10/11.
+<div align="center">
+
+### 🖥️ 1. Floating Desktop HUD
+*Draggable, resizable, always-on-top overlay with live progress bars and reset countdowns.*
+
+<img src="docs/screenshots/desktop_hud.png" alt="QuotaPulse Desktop HUD" width="380" />
 
 ---
 
-## Supported AI Services
+### 📊 2. Top Bar Taskbar Live Chips
+*Directly visible on your taskbar so you never need to click open a menu to check your status.*
 
-| AI Agent | Supported Flavors | Metrics Tracked |
+<img src="docs/screenshots/taskbar_chips.png" alt="QuotaPulse Taskbar Chips" width="90%" />
+
+</div>
+
+---
+
+## 💻 Supported Operating Systems
+
+| Operating System | Compatibility | Features Supported |
 |---|---|---|
-| **🟣 Claude** | Claude Code CLI & Claude Desktop App | Rolling 5h tokens, token limit, total cost ($), burn rate ($/hr), model distribution (Sonnet/Haiku/Opus), reset timer |
-| **⚡ Antigravity** | Antigravity CLI & Antigravity IDE | Active 5h Gemini pool usage (%), step counts, dynamic rolling reset countdown |
-| **🟢 Codex** | Codex CLI & ChatGPT Session | Production rate limit usage (%), plan tier (`FREE` / `PLUS` / `PRO`), reset epoch |
-| **🖱️ Cursor** | Cursor IDE | Fast Requests used vs limit (`125 / 500`), slow requests, monthly billing period reset |
+| 🐧 **Linux** | Ubuntu 22.04 / 24.04+, Debian, Fedora, Arch | Native GTK4 Floating HUD, Wayland & X11 Draggable Window, Top Bar Taskbar Chips |
+| 🪟 **Windows** | Windows 10 & Windows 11 | 1-Click Desktop Setup, Frameless Dark Glass HUD, Taskbar Tray & Toast Alerts |
+| 🍎 **macOS** | macOS 12 Monterey or newer | Cross-Platform Floating Overlay |
 
 ---
 
-## 🐧 Quick Start on Linux (Ubuntu / GNOME / Wayland)
+## 🤖 Supported AI Apps & Accounts
 
-### 1. Clone and Install
-```bash
-git clone https://github.com/MichaelGavanAI/ai-quota-overlay.git
-cd ai-quota-overlay
-pip install --user -r requirements.txt
-```
+QuotaPulse automatically detects your active logins and tracks exact pool limits:
 
-### 2. Launch
-- **Floating Desktop HUD**:
-  ```bash
-  python3 hud/desktop_hud.py
-  ```
-- **Top Bar Taskbar Indicator**:
-  ```bash
-  python3 hud/topbar_indicator.py
-  ```
-- **Terminal Status Dashboard**:
-  ```bash
-  ./bin/ai-quota-overlay status
-  ```
+- **🟣 Claude**:
+  - **Claude Code CLI**: Tracks rolling 5-hour token limits, total session cost ($), burn rate ($/hr), and model family distribution (Sonnet / Haiku / Opus).
+  - **Claude Desktop App**: Tracks live 5-hour and 7-day quota usage directly from your desktop app.
+- **⚡ Google Antigravity**:
+  - **Antigravity CLI**: Dynamically tracks active 5-hour Gemini pools, conversation step volume, and real-time reset countdowns.
+  - **Antigravity IDE**: Live session activity and quota monitoring.
+- **🟢 OpenAI Codex / ChatGPT**:
+  - Automatically queries official production rate limits, plan tiers (`FREE` / `PLUS` / `PRO`), and rolling reset epochs.
+- **🖱️ Cursor IDE**:
+  - Tracks monthly Fast Request usage (`used / 500`), slow requests, and billing cycle renewal dates.
 
 ---
 
-## 🪟 Quick Start on Windows
+## ✨ Features You'll Love
 
-1. Download or clone this repository.
+- **👀 Always-Visible Taskbar Chips**: See your live percentage badges right in your top bar without clicking anything.
+- **⏱️ Exact Reset Countdowns**: Know precisely how many hours and minutes remain until your 5-hour rolling pool or weekly limit resets.
+- **🔔 Proactive Quota Alerts**:
+  - Gentle **Warning Notification** when any model approaches **80%**.
+  - Urgent **Critical Alert** at **90%** so you can switch models before getting locked out.
+  - Built-in anti-spam debounce.
+- **◰ Compact & Full Views**: Switch between a compact glanceable list and detailed model cards with a single click.
+- **🔒 100% Private & Local**: Zero third-party servers. QuotaPulse runs entirely locally on your machine and reads from your existing local app configs.
+
+---
+
+## 🚀 Getting Started
+
+### 🐧 On Linux (Ubuntu / GNOME / Wayland / X11)
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/MichaelGavanAI/QuotaPulse.git
+   cd QuotaPulse
+   pip install --user -r requirements.txt
+   ```
+
+2. **Launch**:
+   - **Floating Desktop Widget**:
+     ```bash
+     python3 hud/desktop_hud.py
+     ```
+   - **Top Bar Taskbar Chips**:
+     ```bash
+     python3 hud/topbar_indicator.py
+     ```
+
+*(Autostart is automatically configured to launch on desktop login).*
+
+---
+
+### 🪟 On Windows (10 & 11)
+
+1. Download or clone this repository to your computer.
 2. Double-click **`setup_windows.bat`**.
-   - Automatically installs required dependencies (PyQt6).
-   - Creates an **`AI Quotas`** shortcut on your Windows Desktop.
-   - Enables autostart on Windows boot (`shell:startup`).
-   - Launches the floating overlay.
+3. **That's it!** QuotaPulse will:
+   - Install required dependencies automatically.
+   - Place a convenient **`AI Quotas`** icon on your Windows Desktop.
+   - Start the widget and configure it to launch on Windows startup.
 
 ---
 
-## ⚙️ Configuration
+## ⚙️ Customization
 
-Configuration is located at `~/.config/ai-quota-overlay/config.json` (or `%APPDATA%\ai-quota-overlay\config.json` on Windows):
+Customize alert thresholds in `~/.config/ai-quota-overlay/config.json` (or `%APPDATA%\ai-quota-overlay\config.json` on Windows):
 
 ```json
 {
   "ui": {
-    "show_reset_timer": true,
     "warning_threshold_pct": 80.0,
     "critical_threshold_pct": 90.0,
     "notifications_enabled": true
@@ -103,4 +125,4 @@ Configuration is located at `~/.config/ai-quota-overlay/config.json` (or `%APPDA
 
 ## 📄 License
 
-MIT License. Free and open source.
+Distributed under the MIT License. Free for personal and commercial use.
