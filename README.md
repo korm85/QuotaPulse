@@ -1,9 +1,17 @@
 # QuotaPulse ⚡
-### Never get cut off by AI limits mid-thought.
+> ### **Never get hit by a surprise AI rate limit again.**
 
-**QuotaPulse** is a lightweight, always-on-top desktop overlay and taskbar widget that monitors your live AI rate limits, token usage, and reset countdowns in real-time.
+Ever been deep in coding flow, only to get slammed with:  
+`❌ "You have reached your usage limit. Try again in 4 hours."`  
+Your flow is broken, your task is stalled, and you had no idea you were close to the cap.
 
-Whether you're deep in coding flow or managing multiple accounts, QuotaPulse gives you instant visibility into your remaining quota across **Claude**, **Google Antigravity**, **OpenAI Codex / ChatGPT**, and **Cursor IDE** without having to open a browser.
+---
+
+### **Why you need QuotaPulse (in 10 seconds):**
+- ⚡ **Glance at your live limits**: See remaining quota across **Claude**, **Antigravity**, **ChatGPT (Codex)**, and **Cursor** directly on your taskbar and desktop.
+- ⏱️ **Exact reset countdowns**: Know the exact hour and minute your 5-hour rolling pool or monthly quota refreshes.
+- 🔔 **Warning before lockout**: Get notified at **80% and 90%** so you can switch models or wrap up *before* hitting a hard brick wall.
+- 🔒 **Zero friction**: 0 API keys, 0 logins. Double-click and it auto-detects all your existing logged-in tools locally.
 
 ---
 
