@@ -302,6 +302,13 @@ class SingleChipIndicator(dbus.service.Object):
         self.action_map[item_id] = "force_refresh"
         item_id += 1
 
+        children.append(make_node(item_id, {"type": "separator"}))
+        item_id += 1
+
+        children.append(make_node(item_id, {"label": "⏻ Turn Off QuotaPulse"}))
+        self.action_map[item_id] = "turn_off"
+        item_id += 1
+
         root_props = dbus.Dictionary({"children-display": dbus.String("submenu")}, signature="sv")
         return dbus.Struct((dbus.Int32(0), root_props, children), signature="(ia{sv}av)")
 
@@ -311,6 +318,8 @@ class SingleChipIndicator(dbus.service.Object):
             self.manager.toggle_hud()
         elif action == "force_refresh":
             self.manager.force_refresh()
+        elif action == "turn_off":
+            self.manager.turn_off_all()
 
 
 class MultiChipManager:
@@ -318,6 +327,15 @@ class MultiChipManager:
         self.main_bus = dbus.SessionBus()
         self.state = {}
         self._load_state()
+
+    def turn_off_all(self):
+        try:
+            import subprocess
+            subprocess.run(["pkill", "-9", "-f", "topbar_indicator.py"])
+            subprocess.run(["pkill", "-9", "-f", "desktop_hud.py"])
+        except Exception:
+            pass
+        sys.exit(0)
 
         # Service definitions
         service_defs = [

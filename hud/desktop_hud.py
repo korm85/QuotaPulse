@@ -388,7 +388,51 @@ button.hud-arrow-btn:hover {
 button.hud-arrow-btn:hover label {
     color: #38bdf8;
 }
-"""
+
+button.hud-power-btn {
+    background-color: #450a0a;
+    border: 1px solid #7f1d1d;
+    color: #fca5a5;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+button.hud-power-btn label {
+    color: #fca5a5;
+    font-weight: 800;
+}
+
+button.hud-power-btn:hover {
+    background-color: #991b1b;
+    border-color: #ef4444;
+}
+
+button.hud-power-btn:hover label {
+    color: #ffffff;
+}
+
+button.hud-turn-off-big-btn {
+    background-color: #7f1d1d;
+    border: 1px solid #dc2626;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    border-radius: 8px;
+    padding: 8px 16px;
+    min-height: 34px;
+}
+
+button.hud-turn-off-big-btn label {
+    color: #ffffff;
+    font-weight: 800;
+}
+
+button.hud-turn-off-big-btn:hover {
+    background-color: #991b1b;
+    border-color: #f87171;
+}
 
 
 def format_short_name(account_name: str) -> str:
@@ -405,17 +449,18 @@ def format_short_name(account_name: str) -> str:
             .replace("Codex (ChatGPT)", "Codex (GPT)"))
 
 
-class AIQuotaHUD(Gtk.ApplicationWindow):
-    def __init__(self, app):
-        super().__init__(application=app, title="AI Quotas Overlay")
+class DesktopHUDWindow(Gtk.Window):
+    def __init__(self):
+        super().__init__(title="AI Quotas HUD")
 
         from backend.config_manager import load_config, save_config
-        self.config = load_config()
-        ui_cfg = self.config.get("ui", {})
-        self.saved_full_width = int(ui_cfg.get("window_width", 340))
-        self.saved_full_height = int(ui_cfg.get("window_height", 460))
-        self.saved_compact_width = int(ui_cfg.get("compact_width", 310))
-        self.saved_compact_height = int(ui_cfg.get("compact_height", 220))
+        config = load_config()
+        ui_cfg = config.get("ui", {})
+
+        self.saved_full_width = int(ui_cfg.get("window_width", 330))
+        self.saved_full_height = int(ui_cfg.get("window_height", 480))
+        self.saved_compact_width = int(ui_cfg.get("compact_width", 300))
+        self.saved_compact_height = int(ui_cfg.get("compact_height", 200))
 
         self.set_default_size(self.saved_full_width, self.saved_full_height)
         self.set_resizable(True)
@@ -466,6 +511,13 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
         refresh_btn.add_css_class("hud-action-btn")
         refresh_btn.connect("clicked", self._on_refresh_clicked)
         header_box.append(refresh_btn)
+
+        # Turn Off Button
+        power_btn = Gtk.Button(label="⏻")
+        power_btn.add_css_class("hud-power-btn")
+        power_btn.set_tooltip_text("Turn Off QuotaPulse (All Indicators)")
+        power_btn.connect("clicked", self._turn_off_all)
+        header_box.append(power_btn)
 
         # Close Button
         close_btn = Gtk.Button(label="✕")
@@ -771,6 +823,25 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
             target_banner.set_text(f"🎯 Next Target: {new_best.get('name', 'Claude')}")
         save_btn.connect("clicked", _save)
         self.settings_box.append(save_btn)
+
+        # 6. Turn Off / Quit Button
+        turn_off_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        turn_off_card.add_css_class("hud-settings-card")
+        turn_off_btn = Gtk.Button(label="⏻ Turn Off QuotaPulse (All Indicators)")
+        turn_off_btn.add_css_class("hud-turn-off-big-btn")
+        turn_off_btn.connect("clicked", self._turn_off_all)
+        turn_off_card.append(turn_off_btn)
+        self.settings_box.append(turn_off_card)
+
+    def _turn_off_all(self, btn=None):
+        """Cleanly kill both desktop HUD and topbar indicator instances."""
+        try:
+            import subprocess
+            subprocess.run(["pkill", "-9", "-f", "topbar_indicator.py"])
+            subprocess.run(["pkill", "-9", "-f", "desktop_hud.py"])
+        except Exception:
+            pass
+        sys.exit(0)
 
     def _save_dimensions(self):
         try:
