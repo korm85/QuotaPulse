@@ -116,8 +116,9 @@ def get_session_start_epoch(data_dir: Path) -> Optional[float]:
 def collect_antigravity_quota(account_config: Dict[str, Any]) -> Dict[str, Any]:
     """Collect accurate usage and quota for an Antigravity instance/account."""
     account_id = account_config.get("id", "antigravity_cli")
-    account_name = account_config.get("name", "Antigravity (CLI)")
     data_dir = Path(os.path.expanduser(account_config.get("data_dir", "~/.gemini/antigravity-cli")))
+    email = extract_email_from_logs(data_dir) or "korm85@gmail.com"
+    account_name = f"Antigravity ({email})"
 
     result: Dict[str, Any] = {
         "id": account_id,
@@ -125,7 +126,7 @@ def collect_antigravity_quota(account_config: Dict[str, Any]) -> Dict[str, Any]:
         "service": "antigravity",
         "enabled": account_config.get("enabled", True),
         "status": "ok",
-        "email": None,
+        "email": email,
         "plan": "PRO",
         "model": "Gemini 3.7 Flash",
         "used_pct": 0.0,

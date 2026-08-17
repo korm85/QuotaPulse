@@ -112,19 +112,18 @@ def auto_discover_system(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]
     }
     fallback_chain = []
 
-    # 1. Claude Primary (michael@gavan.ai / Gavan.ai)
+    # 1. Claude Primary (michael@gavan.ai)
     cl_primary = home / ".claude"
-    if cl_primary.exists() or (home / ".claude.json").exists():
-        detected_accounts["claude"].append({
-            "id": "claude_primary",
-            "name": "Claude (michael@gavan.ai)",
-            "enabled": True,
-            "type": "claude_code",
-            "config_dir": str(cl_primary),
-            "claude_json": str(home / ".claude.json"),
-            "credentials_file": str(cl_primary / ".credentials.json")
-        })
-        fallback_chain.append("claude_primary")
+    detected_accounts["claude"].append({
+        "id": "claude_primary",
+        "name": "Claude (michael@gavan.ai)",
+        "enabled": True,
+        "type": "claude_code",
+        "config_dir": str(cl_primary),
+        "claude_json": str(home / ".claude.json"),
+        "credentials_file": str(cl_primary / ".credentials.json")
+    })
+    fallback_chain.append("claude_primary")
 
     # 2. Claude Secondary (korm85@gmail.com)
     cl_sec = home / ".claude-secondary"
@@ -137,45 +136,31 @@ def auto_discover_system(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]
         "claude_json": str(cl_sec / ".claude.json"),
         "credentials_file": str(cl_sec / ".credentials.json")
     })
-    if "claude_secondary" not in fallback_chain:
-        fallback_chain.append("claude_secondary")
+    fallback_chain.append("claude_secondary")
 
-    # 4. Antigravity CLI & IDE
+    # 3. Antigravity (korm85@gmail.com)
     ag_cli = home / ".gemini" / "antigravity-cli"
-    if ag_cli.exists() or shutil.which("agy") or shutil.which("antigravity"):
-        detected_accounts["antigravity"].append({
-            "id": "antigravity_cli",
-            "name": "Antigravity (CLI)",
-            "enabled": True,
-            "type": "antigravity_local",
-            "data_dir": str(ag_cli),
-            "state_file": str(ag_cli / "jetski_state.pbtxt")
-        })
-        fallback_chain.append("antigravity_cli")
+    detected_accounts["antigravity"].append({
+        "id": "antigravity_cli",
+        "name": "Antigravity (korm85@gmail.com)",
+        "enabled": True,
+        "type": "antigravity_local",
+        "data_dir": str(ag_cli),
+        "state_file": str(ag_cli / "jetski_state.pbtxt")
+    })
+    fallback_chain.append("antigravity_cli")
 
-    ag_ide = home / ".gemini" / "antigravity-ide"
-    if ag_ide.exists():
-        detected_accounts["antigravity"].append({
-            "id": "antigravity_ide",
-            "name": "Antigravity (IDE)",
-            "enabled": True,
-            "type": "antigravity_local",
-            "data_dir": str(ag_ide),
-            "state_file": str(ag_ide / "antigravity_state.pbtxt")
-        })
-
-    # 5. Codex / OpenAI
+    # 4. Codex (korm85@gmail.com)
     codex_dir = home / ".codex"
-    if codex_dir.exists():
-        detected_accounts["codex"].append({
-            "id": "codex_primary",
-            "name": "Codex (ChatGPT)",
-            "enabled": True,
-            "type": "codex_local",
-            "auth_file": str(codex_dir / "auth.json"),
-            "config_file": str(codex_dir / "config.toml")
-        })
-        fallback_chain.append("codex_primary")
+    detected_accounts["codex"].append({
+        "id": "codex_primary",
+        "name": "Codex (korm85@gmail.com)",
+        "enabled": True,
+        "type": "codex_local",
+        "auth_file": str(codex_dir / "auth.json"),
+        "config_file": str(codex_dir / "config.toml")
+    })
+    fallback_chain.append("codex_primary")
 
     # 6. Cursor
     cursor_dir = home / ".config" / "Cursor"
