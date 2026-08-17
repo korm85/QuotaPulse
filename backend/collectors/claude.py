@@ -100,13 +100,31 @@ def collect_claude_desktop_quota(account_config: Dict[str, Any]) -> Dict[str, An
                     sample_epoch = last_sample.get("t", int(time.time() * 1000)) / 1000.0
                     now_epoch = time.time()
 
-                    # Calculate rolling window reset
-                    # Claude 5-hour window typically rolls every 5 hours
-                    rem_secs = max(0, int(5 * 3600 - ((now_epoch - sample_epoch) % (5 * 3600))))
-                    result["resets_in_seconds"] = rem_secs
-                    result["resets_in_human"] = format_duration(rem_secs)
-                    result["resets_at_epoch"] = int(now_epoch + rem_secs)
-                    result["resets_at"] = datetime.fromtimestamp(now_epoch + rem_secs, tz=timezone.utc).isoformat()
+                    # Try getting exact reset from claude-monitor if active
+                    claude_monitor_bin = shutil.which("claude-monitor")
+                    projects_dir = get_user_home() / ".claude" / "projects"
+                    if claude_monitor_bin and projects_dir.exists():
+                        try:
+                            cmd = [claude_monitor_bin, "--once", "--output", "json", "--data-paths", str(projects_dir)]
+                            proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=8)
+                            if proc.returncode == 0 and proc.stdout.strip():
+                                m_data = json.loads(proc.stdout)
+                                reset_epoch = m_data.get("limits", {}).get("five_hour", {}).get("resets_at_epoch")
+                                if reset_epoch and reset_epoch > now_epoch:
+                                    diff = int(reset_epoch - now_epoch)
+                                    result["resets_at_epoch"] = reset_epoch
+                                    result["resets_in_seconds"] = diff
+                                    result["resets_in_human"] = format_duration(diff)
+                                    result["resets_at"] = m_data.get("limits", {}).get("five_hour", {}).get("resets_at")
+                        except Exception:
+                            pass
+
+                    if not result["resets_in_seconds"]:
+                        rem_secs = max(0, int(5 * 3600 - ((now_epoch - sample_epoch) % (5 * 3600))))
+                        result["resets_in_seconds"] = rem_secs
+                        result["resets_in_human"] = format_duration(rem_secs)
+                        result["resets_at_epoch"] = int(now_epoch + rem_secs)
+                        result["resets_at"] = datetime.fromtimestamp(now_epoch + rem_secs, tz=timezone.utc).isoformat()
 
                     result["status"] = "ok"
         except Exception as e:
@@ -255,11 +273,37 @@ def collect_claude_quota(account_config: Dict[str, Any]) -> Dict[str, Any]:
                 result["burn_rate_cost_per_hour"] = round(local.get("burn_rate_cost_per_hour", 0.0), 2)
                 result["model_distribution"] = local.get("model_distribution", [])
                 result["status"] = "ok"
-                return result
         except Exception as e:
             result["details"]["monitor_error"] = str(e)
 
-    # 4. Fallback calculation if claude-monitor didn't run
+    # 4. Integrate server-side authoritative telemetry from desktop history if available
+    desktop_dir = find_claude_desktop_dir()
+    if desktop_dir:
+        plan_hist = desktop_dir / "plan-usage-history.json"
+        if plan_hist.exists():
+            try:
+                with open(plan_hist, "r", encoding="utf-8") as f:
+                    pdata = json.load(f)
+                    samples = pdata.get("samples", [])
+                    if samples:
+                        last_s = samples[-1]
+                        s_time = last_s.get("t", 0) / 1000.0
+                        if time.time() - s_time < 86400:
+                            usage = last_s.get("u", {})
+                            fh = float(usage.get("fh", 0))
+                            sd = float(usage.get("sd", 0))
+                            if fh > 0:
+                                result["used_pct"] = round(fh, 1)
+                                result["remaining_pct"] = round(max(0.0, 100.0 - fh), 1)
+                            result["details"]["7_day_used_pct"] = f"{sd:.1f}%"
+                            result["status"] = "ok"
+            except Exception:
+                pass
+
+    if result["status"] == "ok":
+        return result
+
+    # 5. Fallback calculation if claude-monitor didn't run
     if result["status"] == "unknown":
         if result["email"] or result["plan"]:
             result["status"] = "idle"
