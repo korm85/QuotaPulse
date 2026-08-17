@@ -6,6 +6,10 @@ import sys
 import time
 from pathlib import Path
 
+# Add project root to sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("GLib", "2.0")
@@ -309,12 +313,22 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
         self.window_handle.set_child(header_box)
         self.main_box.append(self.window_handle)
 
-        # Settings View Box (Hidden by default)
+        # Settings View Scroll Container (Hidden by default)
         self.is_settings = False
+        self.settings_scrolled = Gtk.ScrolledWindow()
+        self.settings_scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.settings_scrolled.set_vexpand(True)
+        self.settings_scrolled.set_hexpand(True)
+        self.settings_scrolled.set_visible(False)
+
         self.settings_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         self.settings_box.add_css_class("hud-settings-box")
-        self.settings_box.set_visible(False)
-        self.main_box.append(self.settings_box)
+        self.settings_box.set_margin_top(8)
+        self.settings_box.set_margin_bottom(8)
+        self.settings_box.set_margin_start(10)
+        self.settings_box.set_margin_end(10)
+        self.settings_scrolled.set_child(self.settings_box)
+        self.main_box.append(self.settings_scrolled)
 
         # Full View Scroll Container
         self.scrolled = Gtk.ScrolledWindow()
@@ -348,11 +362,11 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
             self.settings_btn.add_css_class("hud-action-btn-active")
             self.scrolled.set_visible(False)
             self.compact_box.set_visible(False)
-            self.settings_box.set_visible(True)
+            self.settings_scrolled.set_visible(True)
             self._render_settings_view()
         else:
             self.settings_btn.remove_css_class("hud-action-btn-active")
-            self.settings_box.set_visible(False)
+            self.settings_scrolled.set_visible(False)
             if self.is_compact:
                 self.compact_box.set_visible(True)
             else:
