@@ -195,8 +195,8 @@ def compute_exact_claude_5h_usage(projects_dir: Path, plan: str = "TEAM") -> Dic
     # Weighted standard Anthropic pricing
     cost = (total_out * 15.0 + total_cache_create * 3.75 + total_cache_read * 0.30 + total_in * 3.0) / 1000000.0
     
-    # Team Plan budget = $74.00, Pro Plan budget = $45.00
-    plan_budget = 74.0 if "TEAM" in plan.upper() else 45.0
+    # Anthropic Team Plan 5h budget = $85.00, Pro Plan budget = $45.00
+    plan_budget = 85.0 if "TEAM" in plan.upper() else 45.0
     used_pct = min(100.0, (cost / plan_budget) * 100.0) if plan_budget > 0 else 0.0
     
     rem_secs = max(0, int(5 * 3600 - (now - first_ts))) if active_records > 0 else (5 * 3600)
@@ -227,10 +227,13 @@ def collect_claude_quota(account_config: Dict[str, Any]) -> Dict[str, Any]:
     config_dir = Path(os.path.expanduser(config_dir_str)) if config_dir_str else None
     
     if account_id == "claude_secondary" and (not config_dir or not config_dir.exists()):
+        orig_name = account_config.get("name", "Claude (korm85@gmail.com)")
         desktop_dir = find_claude_desktop_dir()
         if desktop_dir and (desktop_dir / "plan-usage-history.json").exists():
-            account_config["name"] = "Claude (Desktop)"
-            return collect_claude_desktop_quota(account_config)
+            res = collect_claude_desktop_quota(account_config)
+            res["name"] = orig_name
+            res["email"] = "korm85@gmail.com"
+            return res
 
     # Standard Claude Code Collector
     account_name = account_config.get("name", "Claude (Primary)")

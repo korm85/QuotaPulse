@@ -112,12 +112,12 @@ def auto_discover_system(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]
     }
     fallback_chain = []
 
-    # 1. Claude Primary
+    # 1. Claude Primary (michael@gavan.ai / Gavan.ai)
     cl_primary = home / ".claude"
     if cl_primary.exists() or (home / ".claude.json").exists():
         detected_accounts["claude"].append({
             "id": "claude_primary",
-            "name": "Claude (Primary)",
+            "name": "Claude (michael@gavan.ai)",
             "enabled": True,
             "type": "claude_code",
             "config_dir": str(cl_primary),
@@ -126,22 +126,19 @@ def auto_discover_system(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]
         })
         fallback_chain.append("claude_primary")
 
-    # 2. Claude Secondary (Explicit CLI Profile only)
-    for sec_name in [".claude-secondary", ".claude-2"]:
-        cl_sec = home / sec_name
-        if cl_sec.exists() and (cl_sec / ".credentials.json").exists():
-            detected_accounts["claude"].append({
-                "id": "claude_secondary",
-                "name": "Claude (Secondary)",
-                "enabled": True,
-                "type": "claude_code",
-                "config_dir": str(cl_sec),
-                "claude_json": str(cl_sec / ".claude.json"),
-                "credentials_file": str(cl_sec / ".credentials.json")
-            })
-            if "claude_secondary" not in fallback_chain:
-                fallback_chain.append("claude_secondary")
-            break
+    # 2. Claude Secondary (korm85@gmail.com)
+    cl_sec = home / ".claude-secondary"
+    detected_accounts["claude"].append({
+        "id": "claude_secondary",
+        "name": "Claude (korm85@gmail.com)",
+        "enabled": True,
+        "type": "claude_code",
+        "config_dir": str(cl_sec),
+        "claude_json": str(cl_sec / ".claude.json"),
+        "credentials_file": str(cl_sec / ".credentials.json")
+    })
+    if "claude_secondary" not in fallback_chain:
+        fallback_chain.append("claude_secondary")
 
     # 4. Antigravity CLI & IDE
     ag_cli = home / ".gemini" / "antigravity-cli"
