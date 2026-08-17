@@ -77,7 +77,8 @@ DEFAULT_CONFIG = {
     },
     "routing_policy": {
         "strategy": "claude_first_relay",
-        "switch_threshold_pct": 3.0,
+        "emergency_failover_mode": "transparent_proxy",
+        "switch_threshold_pct": 80.0,
         "recovery_threshold_pct": 20.0,
         "fallback_chain": [
             "claude_primary",

@@ -662,12 +662,74 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
 
         self.settings_box.append(p_card)
 
-        # 4. Save Button
+        # 4. Emergency Failover Mode Card
+        failover_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        failover_card.add_css_class("hud-settings-card")
+
+        fo_title = Gtk.Label(label="Emergency Failover Mode (When Claude Capped):")
+        fo_title.add_css_class("hud-settings-label")
+        fo_title.set_halign(Gtk.Align.START)
+        failover_card.append(fo_title)
+
+        curr_mode = policy.get("emergency_failover_mode", "transparent_proxy")
+        self.selected_failover_mode = curr_mode
+
+        mode_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+
+        opt_a_btn = Gtk.Button(label="🔵 Option A: Transparent Proxy (Never leave Claude)")
+        opt_b_btn = Gtk.Button(label="🚀 Option B: Native Handoff (Switch to Antigravity CLI)")
+
+        if curr_mode == "transparent_proxy":
+            opt_a_btn.add_css_class("hud-action-btn-active")
+            opt_b_btn.add_css_class("hud-action-btn")
+        else:
+            opt_b_btn.add_css_class("hud-action-btn-active")
+            opt_a_btn.add_css_class("hud-action-btn")
+
+        mode_desc = Gtk.Label()
+        mode_desc.add_css_class("hud-settings-desc")
+        mode_desc.set_halign(Gtk.Align.START)
+
+        def _update_desc():
+            if self.selected_failover_mode == "transparent_proxy":
+                mode_desc.set_text("Default: Seamlessly proxies Gemini into your active Claude prompt without exiting.")
+            else:
+                mode_desc.set_text("Opens Antigravity native CLI with full Michael harness rules & subagents.")
+
+        _update_desc()
+
+        def _select_a(b):
+            self.selected_failover_mode = "transparent_proxy"
+            opt_a_btn.add_css_class("hud-action-btn-active")
+            opt_a_btn.remove_css_class("hud-action-btn")
+            opt_b_btn.remove_css_class("hud-action-btn-active")
+            opt_b_btn.add_css_class("hud-action-btn")
+            _update_desc()
+
+        def _select_b(b):
+            self.selected_failover_mode = "native_handoff"
+            opt_b_btn.add_css_class("hud-action-btn-active")
+            opt_b_btn.remove_css_class("hud-action-btn")
+            opt_a_btn.remove_css_class("hud-action-btn-active")
+            opt_a_btn.add_css_class("hud-action-btn")
+            _update_desc()
+
+        opt_a_btn.connect("clicked", _select_a)
+        opt_b_btn.connect("clicked", _select_b)
+
+        mode_box.append(opt_a_btn)
+        mode_box.append(opt_b_btn)
+        mode_box.append(mode_desc)
+        failover_card.append(mode_box)
+        self.settings_box.append(failover_card)
+
+        # 5. Save Button
         save_btn = Gtk.Button(label="💾 Save & Apply Policy")
         save_btn.add_css_class("hud-save-btn")
         def _save(b):
             policy["switch_threshold_pct"] = round(scale.get_value(), 1)
             policy["fallback_chain"] = chain
+            policy["emergency_failover_mode"] = getattr(self, "selected_failover_mode", "transparent_proxy")
             config["routing_policy"] = policy
             save_config(config)
             save_btn.set_label("✓ Applied!")
