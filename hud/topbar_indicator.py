@@ -147,15 +147,15 @@ class SingleChipIndicator(dbus.service.Object):
         self.default_color = default_color
         self.manager = manager
 
-        # Shared bus with deterministic name to replace existing in-place
-        self.bus = self.manager.main_bus
-        self.bus_name_str = f"org.kde.StatusNotifierItem.QuotaPulse_{service_key}"
-        self.bus_name = dbus.service.BusName(self.bus_name_str, self.bus, do_not_queue=True, replace_existing=True)
+        # Private bus connection per chip ensures clean object path registration
+        self.bus = dbus.SessionBus(private=True)
+        self.bus_name_str = f"org.kde.StatusNotifierItem-{os.getpid()}-{service_key}"
+        self.bus_name = dbus.service.BusName(self.bus_name_str, self.bus)
 
         # Standard object path required by GNOME StatusNotifierWatcher
         super().__init__(self.bus, "/StatusNotifierItem")
 
-        self.menu_path = f"/MenuBar_{service_key}"
+        self.menu_path = "/MenuBar"
         self.dbus_menu = ChipDBusMenu(self.bus, self.menu_path, self)
 
         self.icon_name = "utilities-system-monitor"

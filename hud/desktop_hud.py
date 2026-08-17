@@ -433,6 +433,7 @@ button.hud-turn-off-big-btn:hover {
     background-color: #991b1b;
     border-color: #f87171;
 }
+"""
 
 
 def format_short_name(account_name: str) -> str:
@@ -1114,7 +1115,8 @@ class HUDApp(Gtk.Application):
                 display, provider, Gtk.STYLE_PROVIDER_PRIORITY_USER
             )
 
-        win = AIQuotaHUD(self)
+        win = DesktopHUDWindow()
+        win.set_application(self)
         win.present()
 
 
