@@ -107,6 +107,20 @@ QuotaPulse automatically detects your active logins and tracks exact pool limits
 
 ## 🚀 Getting Started
 
+### ⚡ 1-Minute Onboarding & Multi-Account Bootstrap
+
+Run the interactive setup wizard to verify your primary tools and link your 2nd Claude subscription:
+
+```bash
+ai-quota-overlay onboard
+```
+- ✅ **Auto-detects** your primary Claude Code profile (`~/.claude`).
+- 🔄 **1-Click Links** your 2nd Claude account / Desktop subscription into isolated profile (`~/.claude-secondary`).
+- ⚡ **Verifies** Antigravity (`agy`) and OpenAI Codex connections.
+- 🎯 **Initializes** live Desktop HUD and Top Bar Taskbar chips.
+
+---
+
 ### 🐧 On Linux (Ubuntu / GNOME / Wayland / X11)
 
 1. **Clone the repository**:

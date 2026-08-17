@@ -157,6 +157,84 @@ def install_gnome_extension() -> None:
         print(f"[!] Warning: Could not run gnome-extensions enable: {e}")
 
 
+def run_onboarding_wizard() -> None:
+    """Interactive user onboarding and multi-account bootstrap."""
+    print(f"\n{BOLD}{CYAN}══════════════════════════════════════════════════════════════════════════════{RESET}")
+    print(f"{BOLD}{CYAN}                 ⚡ QUOTAPULSE USER ONBOARDING & BOOTSTRAP                   {RESET}")
+    print(f"{BOLD}{CYAN}══════════════════════════════════════════════════════════════════════════════{RESET}\n")
+
+    # Step 1: Check Primary Claude
+    primary_creds = Path.home() / ".claude" / ".credentials.json"
+    print(f"{BOLD}1. Checking Primary Claude CLI Profile (~/.claude):{RESET}")
+    if primary_creds.exists():
+        print(f"   {GREEN}[✓] Primary Claude account detected & configured!{RESET}")
+    else:
+        print(f"   {YELLOW}[!] Primary Claude account not detected.{RESET}")
+        print("   Running 'claude login' for Primary Profile...")
+        subprocess.run(["claude", "login"])
+
+    # Step 2: Check Secondary Claude Profile (~/.claude-secondary)
+    sec_dir = Path.home() / ".claude-secondary"
+    sec_creds = sec_dir / ".credentials.json"
+    print(f"\n{BOLD}2. Multi-Subscription Setup (Uninterrupted 24/7 Relay):{RESET}")
+    print("   QuotaPulse can automatically switch to a 2nd Claude subscription")
+    print("   when your primary account hits its 5-hour limit.")
+    
+    if sec_creds.exists():
+        print(f"   {GREEN}[✓] Secondary Claude account (~/.claude-secondary) is already configured!{RESET}")
+    else:
+        try:
+            ans = input(f"\n   {BOLD}Do you have a 2nd Claude account / Desktop subscription to link? [y/N]: {RESET}").strip().lower()
+            if ans in ("y", "yes"):
+                sec_dir.mkdir(parents=True, exist_ok=True)
+                print(f"\n   {CYAN}[*] Launching browser login for Secondary Profile (~/.claude-secondary)...{RESET}")
+                print(f"   {DIM}Log in with your 2nd / Desktop Anthropic account in the opened window.{RESET}\n")
+                env = os.environ.copy()
+                env["CLAUDE_CONFIG_DIR"] = str(sec_dir)
+                subprocess.run(["claude", "login"], env=env)
+                
+                # Register in config.json
+                from backend.config_manager import load_config, save_config
+                cfg = load_config()
+                claude_accs = cfg.get("accounts", {}).get("claude", [])
+                has_sec = False
+                for a in claude_accs:
+                    if a.get("id") == "claude_secondary":
+                        a["config_dir"] = str(sec_dir)
+                        a["enabled"] = True
+                        has_sec = True
+                        break
+                if not has_sec:
+                    claude_accs.append({
+                        "id": "claude_secondary",
+                        "name": "Claude (Secondary)",
+                        "enabled": True,
+                        "type": "claude_code",
+                        "config_dir": str(sec_dir),
+                        "claude_json": str(sec_dir / ".claude.json"),
+                        "credentials_file": str(sec_creds)
+                    })
+                save_config(cfg)
+                print(f"\n   {GREEN}[✓] Secondary account linked and saved to QuotaPulse!{RESET}")
+            else:
+                print(f"   {DIM}Skipped. You can run 'ai-quota-overlay onboard' anytime to link it later.{RESET}")
+        except EOFError:
+            pass
+
+    # Step 3: Check Antigravity & Codex
+    print(f"\n{BOLD}3. Checking Other AI Tools:{RESET}")
+    agy_path = shutil.which("agy") or shutil.which("antigravity")
+    if agy_path:
+        print(f"   {GREEN}[✓] Antigravity CLI detected:{RESET} {agy_path}")
+    else:
+        print(f"   {DIM}[-] Antigravity CLI not installed.{RESET}")
+
+    # Step 4: Refresh state
+    print(f"\n{BOLD}4. Synchronizing Live Quotas...{RESET}")
+    collect_all_quotas()
+    print(f"   {GREEN}[✓] QuotaPulse fully initialized!{RESET}\n")
+
+
 def main():
     parser = argparse.ArgumentParser(description="AI Quota Overlay Manager")
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
@@ -173,6 +251,10 @@ def main():
     # daemon
     daemon_p = subparsers.add_parser("daemon", help="Run monitoring daemon")
     daemon_p.add_argument("--interval", type=int, default=60, help="Refresh interval in seconds")
+
+    # onboard / bootstrap
+    subparsers.add_parser("onboard", help="Interactive user onboarding and multi-account bootstrap")
+    subparsers.add_parser("bootstrap", help="Alias for onboard")
 
     # install-extension
     subparsers.add_parser("install-extension", help="Install GNOME Shell Top Bar Extension")
@@ -214,6 +296,8 @@ def main():
         print(f"[✓] Done! Summary: {state.get('summary_text')}")
     elif action == "daemon":
         run_daemon(interval_seconds=args.interval)
+    elif action in ("onboard", "bootstrap"):
+        run_onboarding_wizard()
     elif action == "route":
         from backend.relay_router import select_best_account
         best, reason, candidates = select_best_account()
