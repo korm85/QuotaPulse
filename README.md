@@ -81,7 +81,7 @@ QuotaPulse automatically detects your active logins and tracks exact pool limits
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/MichaelGavanAI/QuotaPulse.git
+   git clone https://github.com/korm85/QuotaPulse.git
    cd QuotaPulse
    pip install --user -r requirements.txt
    ```
