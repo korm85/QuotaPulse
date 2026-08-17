@@ -94,15 +94,130 @@ DEFAULT_CONFIG = {
 }
 
 
+def auto_discover_system(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Automatically scan the OS and configure all installed AI tools with zero user prompts."""
+    import shutil
+    from backend.platform_paths import get_appdata_dir, get_user_home
+    home = get_user_home()
+    appdata = get_appdata_dir()
+
+    if cfg is None:
+        cfg = json.loads(json.dumps(DEFAULT_CONFIG))
+
+    detected_accounts = {
+        "claude": [],
+        "antigravity": [],
+        "codex": [],
+        "cursor": []
+    }
+    fallback_chain = []
+
+    # 1. Claude Primary
+    cl_primary = home / ".claude"
+    if cl_primary.exists() or (home / ".claude.json").exists():
+        detected_accounts["claude"].append({
+            "id": "claude_primary",
+            "name": "Claude (Primary)",
+            "enabled": True,
+            "type": "claude_code",
+            "config_dir": str(cl_primary),
+            "claude_json": str(home / ".claude.json"),
+            "credentials_file": str(cl_primary / ".credentials.json")
+        })
+        fallback_chain.append("claude_primary")
+
+    # 2. Claude Secondary (CLI Profile)
+    for sec_name in [".claude-secondary", ".claude-2"]:
+        cl_sec = home / sec_name
+        if cl_sec.exists():
+            detected_accounts["claude"].append({
+                "id": "claude_secondary",
+                "name": "Claude (Secondary)",
+                "enabled": True,
+                "type": "claude_code",
+                "config_dir": str(cl_sec),
+                "claude_json": str(cl_sec / ".claude.json"),
+                "credentials_file": str(cl_sec / ".credentials.json")
+            })
+            if "claude_secondary" not in fallback_chain:
+                fallback_chain.append("claude_secondary")
+            break
+
+    # 3. Claude Desktop App
+    for dt_candidate in [appdata / "Claude", home / ".config" / "Claude", home / "AppData" / "Roaming" / "Claude"]:
+        if dt_candidate.exists() and (dt_candidate / "plan-usage-history.json").exists():
+            detected_accounts["claude"].append({
+                "id": "claude_desktop",
+                "name": "Claude (Desktop)",
+                "enabled": True,
+                "type": "claude_desktop",
+                "config_dir": str(dt_candidate)
+            })
+            break
+
+    # 4. Antigravity CLI & IDE
+    ag_cli = home / ".gemini" / "antigravity-cli"
+    if ag_cli.exists() or shutil.which("agy") or shutil.which("antigravity"):
+        detected_accounts["antigravity"].append({
+            "id": "antigravity_cli",
+            "name": "Antigravity (CLI)",
+            "enabled": True,
+            "type": "antigravity_local",
+            "data_dir": str(ag_cli),
+            "state_file": str(ag_cli / "jetski_state.pbtxt")
+        })
+        fallback_chain.append("antigravity_cli")
+
+    ag_ide = home / ".gemini" / "antigravity-ide"
+    if ag_ide.exists():
+        detected_accounts["antigravity"].append({
+            "id": "antigravity_ide",
+            "name": "Antigravity (IDE)",
+            "enabled": True,
+            "type": "antigravity_local",
+            "data_dir": str(ag_ide),
+            "state_file": str(ag_ide / "antigravity_state.pbtxt")
+        })
+
+    # 5. Codex / OpenAI
+    codex_dir = home / ".codex"
+    if codex_dir.exists():
+        detected_accounts["codex"].append({
+            "id": "codex_primary",
+            "name": "Codex (ChatGPT)",
+            "enabled": True,
+            "type": "codex_local",
+            "auth_file": str(codex_dir / "auth.json"),
+            "config_file": str(codex_dir / "config.toml")
+        })
+        fallback_chain.append("codex_primary")
+
+    # 6. Cursor
+    cursor_dir = home / ".config" / "Cursor"
+    if cursor_dir.exists():
+        detected_accounts["cursor"].append({
+            "id": "cursor_primary",
+            "name": "Cursor",
+            "enabled": True,
+            "type": "cursor_local"
+        })
+
+    cfg["accounts"] = detected_accounts
+    if fallback_chain:
+        cfg["routing_policy"]["fallback_chain"] = fallback_chain
+
+    return cfg
+
+
 def load_config() -> Dict[str, Any]:
-    """Load configuration from ~/.config/ai-quota-overlay/config.json or create default."""
+    """Load configuration from ~/.config/ai-quota-overlay/config.json or create via auto-discovery."""
     if not DEFAULT_CONFIG_DIR.exists():
         DEFAULT_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
     if not DEFAULT_CONFIG_FILE.exists():
-        with open(DEFAULT_CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(DEFAULT_CONFIG, f, indent=2)
-        return DEFAULT_CONFIG
+        discovered = auto_discover_system()
+        save_config(discovered)
+        return discovered
 
     try:
         with open(DEFAULT_CONFIG_FILE, "r", encoding="utf-8") as f:

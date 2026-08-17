@@ -158,81 +158,35 @@ def install_gnome_extension() -> None:
 
 
 def run_onboarding_wizard() -> None:
-    """Interactive user onboarding and multi-account bootstrap."""
+    """Zero-question automatic system discovery and multi-account bootstrap."""
+    from backend.config_manager import auto_discover_system, save_config
     print(f"\n{BOLD}{CYAN}══════════════════════════════════════════════════════════════════════════════{RESET}")
-    print(f"{BOLD}{CYAN}                 ⚡ QUOTAPULSE USER ONBOARDING & BOOTSTRAP                   {RESET}")
+    print(f"{BOLD}{CYAN}                 ⚡ QUOTAPULSE ZERO-FRICTION AUTO-DISCOVERY                  {RESET}")
     print(f"{BOLD}{CYAN}══════════════════════════════════════════════════════════════════════════════{RESET}\n")
 
-    # Step 1: Check Primary Claude
-    primary_creds = Path.home() / ".claude" / ".credentials.json"
-    print(f"{BOLD}1. Checking Primary Claude CLI Profile (~/.claude):{RESET}")
-    if primary_creds.exists():
-        print(f"   {GREEN}[✓] Primary Claude account detected & configured!{RESET}")
-    else:
-        print(f"   {YELLOW}[!] Primary Claude account not detected.{RESET}")
-        print("   Running 'claude login' for Primary Profile...")
-        subprocess.run(["claude", "login"])
+    print(f"{BOLD}[*] Scanning system for installed AI tools & active profiles...{RESET}")
+    cfg = auto_discover_system()
+    save_config(cfg)
 
-    # Step 2: Check Secondary Claude Profile (~/.claude-secondary)
-    sec_dir = Path.home() / ".claude-secondary"
-    sec_creds = sec_dir / ".credentials.json"
-    print(f"\n{BOLD}2. Multi-Subscription Setup (Uninterrupted 24/7 Relay):{RESET}")
-    print("   QuotaPulse can automatically switch to a 2nd Claude subscription")
-    print("   when your primary account hits its 5-hour limit.")
-    
-    if sec_creds.exists():
-        print(f"   {GREEN}[✓] Secondary Claude account (~/.claude-secondary) is already configured!{RESET}")
-    else:
-        try:
-            ans = input(f"\n   {BOLD}Do you have a 2nd Claude account / Desktop subscription to link? [y/N]: {RESET}").strip().lower()
-            if ans in ("y", "yes"):
-                sec_dir.mkdir(parents=True, exist_ok=True)
-                print(f"\n   {CYAN}[*] Launching browser login for Secondary Profile (~/.claude-secondary)...{RESET}")
-                print(f"   {DIM}Log in with your 2nd / Desktop Anthropic account in the opened window.{RESET}\n")
-                env = os.environ.copy()
-                env["CLAUDE_CONFIG_DIR"] = str(sec_dir)
-                subprocess.run(["claude", "login"], env=env)
-                
-                # Register in config.json
-                from backend.config_manager import load_config, save_config
-                cfg = load_config()
-                claude_accs = cfg.get("accounts", {}).get("claude", [])
-                has_sec = False
-                for a in claude_accs:
-                    if a.get("id") == "claude_secondary":
-                        a["config_dir"] = str(sec_dir)
-                        a["enabled"] = True
-                        has_sec = True
-                        break
-                if not has_sec:
-                    claude_accs.append({
-                        "id": "claude_secondary",
-                        "name": "Claude (Secondary)",
-                        "enabled": True,
-                        "type": "claude_code",
-                        "config_dir": str(sec_dir),
-                        "claude_json": str(sec_dir / ".claude.json"),
-                        "credentials_file": str(sec_creds)
-                    })
-                save_config(cfg)
-                print(f"\n   {GREEN}[✓] Secondary account linked and saved to QuotaPulse!{RESET}")
-            else:
-                print(f"   {DIM}Skipped. You can run 'ai-quota-overlay onboard' anytime to link it later.{RESET}")
-        except EOFError:
-            pass
+    accounts = cfg.get("accounts", {})
+    found_count = 0
 
-    # Step 3: Check Antigravity & Codex
-    print(f"\n{BOLD}3. Checking Other AI Tools:{RESET}")
-    agy_path = shutil.which("agy") or shutil.which("antigravity")
-    if agy_path:
-        print(f"   {GREEN}[✓] Antigravity CLI detected:{RESET} {agy_path}")
-    else:
-        print(f"   {DIM}[-] Antigravity CLI not installed.{RESET}")
+    for svc, acc_list in accounts.items():
+        for acc in acc_list:
+            if acc.get("enabled"):
+                found_count += 1
+                cfg_dir = acc.get("config_dir", "Default")
+                print(f"   {GREEN}[✓] Detected & Linked:{RESET} {BOLD}{acc.get('name')}{RESET} {DIM}({cfg_dir}){RESET}")
+
+    chain = cfg.get("routing_policy", {}).get("fallback_chain", [])
+    print(f"\n{BOLD}🎯 Auto-Configured Relay Failover Chain:{RESET}")
+    print(f"   {' → '.join(chain)}")
 
     # Step 4: Refresh state
-    print(f"\n{BOLD}4. Synchronizing Live Quotas...{RESET}")
-    collect_all_quotas()
-    print(f"   {GREEN}[✓] QuotaPulse fully initialized!{RESET}\n")
+    print(f"\n{BOLD}[*] Synchronizing Live Quotas...{RESET}")
+    state = collect_all_quotas()
+    print(f"   {GREEN}[✓] QuotaPulse fully initialized with {found_count} detected tools!{RESET}")
+    print(f"   {DIM}Summary: {state.get('summary_text')}{RESET}\n")
 
 
 def main():
