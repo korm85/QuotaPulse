@@ -49,62 +49,87 @@ window.ai-hud-window {
     margin-left: 2px;
 }
 
+/* Base Button Styling Override */
+button {
+    background-image: none !important;
+    background-color: #1e293b !important;
+    border: 1px solid #475569 !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    border-radius: 6px !important;
+}
+
+button label {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+button:hover {
+    background-color: #334155 !important;
+    border-color: #38bdf8 !important;
+}
+
+button:hover label {
+    color: #38bdf8 !important;
+}
+
 /* Header Buttons */
 button.hud-action-btn {
-    background-color: #1e293b;
-    border: 1px solid #334155;
-    color: #ffffff;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 6px;
+    background-color: #1e293b !important;
+    border: 1px solid #475569 !important;
+    color: #ffffff !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
 }
 
 button.hud-action-btn label {
-    color: #ffffff;
-    font-weight: 700;
+    color: #ffffff !important;
+    font-weight: 700 !important;
 }
 
 button.hud-action-btn:hover {
-    background-color: #334155;
-    border-color: #38bdf8;
+    background-color: #334155 !important;
+    border-color: #38bdf8 !important;
 }
 
 button.hud-action-btn:hover label {
-    color: #38bdf8;
+    color: #38bdf8 !important;
 }
 
 button.hud-action-btn-active {
-    background-color: #2563eb;
-    border: 1px solid #60a5fa;
-    color: #ffffff;
+    background-color: #2563eb !important;
+    border: 1px solid #60a5fa !important;
+    color: #ffffff !important;
 }
 
 button.hud-action-btn-active label {
-    color: #ffffff;
+    color: #ffffff !important;
 }
 
 button.hud-close-btn {
-    background-color: transparent;
-    border: none;
-    color: #cbd5e1;
-    font-size: 13px;
-    font-weight: 900;
-    padding: 2px 6px;
-    border-radius: 5px;
+    background-color: transparent !important;
+    border: none !important;
+    color: #cbd5e1 !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    padding: 2px 6px !important;
+    border-radius: 5px !important;
 }
 
 button.hud-close-btn label {
-    color: #cbd5e1;
+    color: #cbd5e1 !important;
 }
 
 button.hud-close-btn:hover {
-    background-color: #dc2626;
-    color: #ffffff;
+    background-color: #dc2626 !important;
+    color: #ffffff !important;
 }
 
 button.hud-close-btn:hover label {
-    color: #ffffff;
+    color: #ffffff !important;
 }
 
 /* Full View Cards */
@@ -264,50 +289,50 @@ progressbar.critical progress {
 }
 
 button.hud-save-btn {
-    background-color: #2563eb;
-    border: 1px solid #3b82f6;
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: 800;
-    border-radius: 8px;
-    padding: 8px 16px;
-    min-height: 34px;
+    background-color: #2563eb !important;
+    border: 1px solid #3b82f6 !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    border-radius: 8px !important;
+    padding: 8px 16px !important;
+    min-height: 34px !important;
 }
 
 button.hud-save-btn label {
-    color: #ffffff;
-    font-weight: 800;
+    color: #ffffff !important;
+    font-weight: 800 !important;
 }
 
 button.hud-save-btn:hover {
-    background-color: #1d4ed8;
-    border-color: #60a5fa;
+    background-color: #1d4ed8 !important;
+    border-color: #60a5fa !important;
 }
 
 button.hud-arrow-btn {
-    background-color: #1e293b;
-    border: 1px solid #475569;
-    color: #ffffff;
-    font-size: 11px;
-    font-weight: 900;
-    border-radius: 6px;
-    padding: 3px 8px;
-    min-width: 28px;
-    min-height: 24px;
+    background-color: #1e293b !important;
+    border: 1px solid #475569 !important;
+    color: #ffffff !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    border-radius: 6px !important;
+    padding: 3px 8px !important;
+    min-width: 28px !important;
+    min-height: 24px !important;
 }
 
 button.hud-arrow-btn label {
-    color: #ffffff;
-    font-weight: 900;
+    color: #ffffff !important;
+    font-weight: 900 !important;
 }
 
 button.hud-arrow-btn:hover {
-    background-color: #334155;
-    border-color: #38bdf8;
+    background-color: #334155 !important;
+    border-color: #38bdf8 !important;
 }
 
 button.hud-arrow-btn:hover label {
-    color: #38bdf8;
+    color: #38bdf8 !important;
 }
 """
 
@@ -764,7 +789,7 @@ class HUDApp(Gtk.Application):
         display = Gdk.Display.get_default()
         if display:
             Gtk.StyleContext.add_provider_for_display(
-                display, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                display, provider, Gtk.STYLE_PROVIDER_PRIORITY_USER
             )
 
         win = AIQuotaHUD(self)
