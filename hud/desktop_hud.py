@@ -451,7 +451,7 @@ def format_short_name(account_name: str) -> str:
 
 class DesktopHUDWindow(Gtk.Window):
     def __init__(self):
-        super().__init__(title="AI Quotas HUD")
+        super().__init__(title="QuotaPulse")
 
         from backend.config_manager import load_config, save_config
         config = load_config()
@@ -482,7 +482,7 @@ class DesktopHUDWindow(Gtk.Window):
         header_box.add_css_class("hud-header-inner")
 
         title_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
-        title = Gtk.Label(label="⚡ AI QUOTAS")
+        title = Gtk.Label(label="⚡ QUOTAPULSE")
         title.add_css_class("hud-title")
         title_box.append(title)
 

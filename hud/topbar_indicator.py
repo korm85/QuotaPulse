@@ -147,16 +147,15 @@ class SingleChipIndicator(dbus.service.Object):
         self.default_color = default_color
         self.manager = manager
 
-        # Private bus connection for clean multi-instance isolation
-        self.bus = dbus.SessionBus(private=True)
-
-        self.bus_name_str = f"org.kde.StatusNotifierItem-{os.getpid()}-{service_key}"
-        self.bus_name = dbus.service.BusName(self.bus_name_str, self.bus)
+        # Shared bus with deterministic name to replace existing in-place
+        self.bus = self.manager.main_bus
+        self.bus_name_str = f"org.kde.StatusNotifierItem.QuotaPulse_{service_key}"
+        self.bus_name = dbus.service.BusName(self.bus_name_str, self.bus, do_not_queue=True, replace_existing=True)
 
         # Standard object path required by GNOME StatusNotifierWatcher
         super().__init__(self.bus, "/StatusNotifierItem")
 
-        self.menu_path = "/MenuBar"
+        self.menu_path = f"/MenuBar_{service_key}"
         self.dbus_menu = ChipDBusMenu(self.bus, self.menu_path, self)
 
         self.icon_name = "utilities-system-monitor"
@@ -294,7 +293,7 @@ class SingleChipIndicator(dbus.service.Object):
         children.append(make_node(item_id, {"type": "separator"}))
         item_id += 1
 
-        children.append(make_node(item_id, {"label": "🖥️ Open Desktop HUD"}))
+        children.append(make_node(item_id, {"label": "🖥️ Open QuotaPulse"}))
         self.action_map[item_id] = "toggle_hud"
         item_id += 1
 
