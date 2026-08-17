@@ -183,6 +183,57 @@ progressbar.critical progress {
     border-radius: 3px;
     min-height: 6px;
 }
+
+/* Settings View Styles */
+.hud-settings-box {
+    padding: 10px 14px;
+}
+.hud-settings-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #38bdf8;
+    margin-bottom: 4px;
+}
+.hud-settings-card {
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+}
+.hud-settings-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+.hud-settings-desc {
+    font-size: 10px;
+    color: #94a3b8;
+}
+.hud-save-btn {
+    background-color: #2563eb;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+}
+.hud-save-btn:hover {
+    background-color: #1d4ed8;
+}
+.hud-arrow-btn {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: bold;
+    border: none;
+    border-radius: 4px;
+    padding: 2px 6px;
+}
+.hud-arrow-btn:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
 """
 
 
@@ -237,6 +288,12 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
         self.compact_btn.connect("clicked", self._toggle_compact)
         header_box.append(self.compact_btn)
 
+        # Settings / Policy Button
+        self.settings_btn = Gtk.Button(label="⚙️")
+        self.settings_btn.add_css_class("hud-action-btn")
+        self.settings_btn.connect("clicked", self._toggle_settings)
+        header_box.append(self.settings_btn)
+
         # Refresh Button
         refresh_btn = Gtk.Button(label="🔄")
         refresh_btn.add_css_class("hud-action-btn")
@@ -251,6 +308,13 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
 
         self.window_handle.set_child(header_box)
         self.main_box.append(self.window_handle)
+
+        # Settings View Box (Hidden by default)
+        self.is_settings = False
+        self.settings_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        self.settings_box.add_css_class("hud-settings-box")
+        self.settings_box.set_visible(False)
+        self.main_box.append(self.settings_box)
 
         # Full View Scroll Container
         self.scrolled = Gtk.ScrolledWindow()
@@ -278,7 +342,152 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
         # Update timer (every 5 seconds)
         GLib.timeout_add_seconds(5, self.update_ui)
 
+    def _toggle_settings(self, btn):
+        self.is_settings = not self.is_settings
+        if self.is_settings:
+            self.settings_btn.add_css_class("hud-action-btn-active")
+            self.scrolled.set_visible(False)
+            self.compact_box.set_visible(False)
+            self.settings_box.set_visible(True)
+            self._render_settings_view()
+        else:
+            self.settings_btn.remove_css_class("hud-action-btn-active")
+            self.settings_box.set_visible(False)
+            if self.is_compact:
+                self.compact_box.set_visible(True)
+            else:
+                self.scrolled.set_visible(True)
+            self.update_ui()
+
+    def _render_settings_view(self):
+        while self.settings_box.get_first_child():
+            self.settings_box.remove(self.settings_box.get_first_child())
+
+        from backend.config_manager import load_config, save_config
+        from backend.relay_router import select_best_account
+
+        config = load_config()
+        policy = config.get("routing_policy", {})
+        switch_thresh = float(policy.get("switch_threshold_pct", 80.0))
+        chain = list(policy.get("fallback_chain", ["claude_primary", "claude_secondary", "antigravity_cli", "codex_primary"]))
+        strategy = policy.get("strategy", "claude_first_relay")
+
+        best_acc, reason, _ = select_best_account()
+
+        # 1. Title & Active Target Banner
+        header = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        title = Gtk.Label(label="⚙️ ROUTING & PRIORITIES")
+        title.add_css_class("hud-settings-title")
+        title.set_halign(Gtk.Align.START)
+        header.append(title)
+
+        target_banner = Gtk.Label(label=f"🎯 Next Target: {best_acc.get('name', 'Claude')}")
+        target_banner.add_css_class("hud-settings-label")
+        target_banner.set_halign(Gtk.Align.START)
+        header.append(target_banner)
+        self.settings_box.append(header)
+
+        # 2. Switch Threshold Slider
+        thresh_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        thresh_card.add_css_class("hud-settings-card")
+
+        t_lbl_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        t_lbl = Gtk.Label(label="Switch Threshold:")
+        t_lbl.add_css_class("hud-settings-label")
+        t_lbl_box.append(t_lbl)
+
+        val_lbl = Gtk.Label(label=f"{switch_thresh:.1f}%")
+        val_lbl.add_css_class("hud-reset")
+        val_lbl.set_halign(Gtk.Align.END)
+        val_lbl.set_hexpand(True)
+        t_lbl_box.append(val_lbl)
+        thresh_card.append(t_lbl_box)
+
+        scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 1.0, 95.0, 1.0)
+        scale.set_value(switch_thresh)
+        scale.set_hexpand(True)
+        def _on_scale_val(s):
+            val_lbl.set_text(f"{s.get_value():.1f}%")
+        scale.connect("value-changed", _on_scale_val)
+        thresh_card.append(scale)
+
+        desc = Gtk.Label(label="Auto-switches to backup when active model reaches this cap.")
+        desc.add_css_class("hud-settings-desc")
+        desc.set_halign(Gtk.Align.START)
+        thresh_card.append(desc)
+        self.settings_box.append(thresh_card)
+
+        # 3. Priority Chain List
+        p_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        p_card.add_css_class("hud-settings-card")
+
+        p_title = Gtk.Label(label="Priority Chain (Order of Failover):")
+        p_title.add_css_class("hud-settings-label")
+        p_title.set_halign(Gtk.Align.START)
+        p_card.append(p_title)
+
+        names = {
+            "claude_primary": "🟣 Claude (Primary)",
+            "claude_secondary": "🟣 Claude (Secondary)",
+            "antigravity_cli": "⚡ Antigravity (CLI)",
+            "codex_primary": "🟢 Codex (ChatGPT)"
+        }
+
+        for idx, cid in enumerate(chain):
+            row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+            r_name = Gtk.Label(label=f"{idx+1}. {names.get(cid, cid)}")
+            r_name.add_css_class("hud-settings-desc")
+            r_name.set_hexpand(True)
+            r_name.set_halign(Gtk.Align.START)
+            row.append(r_name)
+
+            if idx > 0:
+                up_btn = Gtk.Button(label="▲")
+                up_btn.add_css_class("hud-arrow-btn")
+                def _move_up(b, i=idx):
+                    chain[i], chain[i-1] = chain[i-1], chain[i]
+                    policy["fallback_chain"] = chain
+                    config["routing_policy"] = policy
+                    save_config(config)
+                    self._render_settings_view()
+                up_btn.connect("clicked", _move_up)
+                row.append(up_btn)
+
+            if idx < len(chain) - 1:
+                down_btn = Gtk.Button(label="▼")
+                down_btn.add_css_class("hud-arrow-btn")
+                def _move_down(b, i=idx):
+                    chain[i], chain[i+1] = chain[i+1], chain[i]
+                    policy["fallback_chain"] = chain
+                    config["routing_policy"] = policy
+                    save_config(config)
+                    self._render_settings_view()
+                down_btn.connect("clicked", _move_down)
+                row.append(down_btn)
+
+            p_card.append(row)
+
+        self.settings_box.append(p_card)
+
+        # 4. Save Button
+        save_btn = Gtk.Button(label="💾 Save & Apply Policy")
+        save_btn.add_css_class("hud-save-btn")
+        def _save(b):
+            policy["switch_threshold_pct"] = round(scale.get_value(), 1)
+            policy["fallback_chain"] = chain
+            config["routing_policy"] = policy
+            save_config(config)
+            save_btn.set_label("✓ Applied!")
+            GLib.timeout_add_seconds(1, lambda: save_btn.set_label("💾 Save & Apply Policy"))
+            # Update target banner
+            new_best, _, _ = select_best_account()
+            target_banner.set_text(f"🎯 Next Target: {new_best.get('name', 'Claude')}")
+        save_btn.connect("clicked", _save)
+        self.settings_box.append(save_btn)
+
     def _toggle_compact(self, btn):
+        if self.is_settings:
+            self._toggle_settings(None)
         self.is_compact = not self.is_compact
         if self.is_compact:
             self.compact_btn.set_label("◫ Full")
