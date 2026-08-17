@@ -327,15 +327,6 @@ class MultiChipManager:
         self.state = {}
         self._load_state()
 
-    def turn_off_all(self):
-        try:
-            import subprocess
-            subprocess.run(["pkill", "-9", "-f", "topbar_indicator.py"])
-            subprocess.run(["pkill", "-9", "-f", "desktop_hud.py"])
-        except Exception:
-            pass
-        sys.exit(0)
-
         # Service definitions
         service_defs = [
             ("claude", "Claude", "🟣 CL", "#a855f7"),
@@ -357,6 +348,15 @@ class MultiChipManager:
 
         # Update every 5 seconds
         GLib.timeout_add_seconds(5, self._periodic_update)
+
+    def turn_off_all(self):
+        try:
+            import subprocess
+            subprocess.run(["pkill", "-9", "-f", "topbar_indicator.py"])
+            subprocess.run(["pkill", "-9", "-f", "desktop_hud.py"])
+        except Exception:
+            pass
+        sys.exit(0)
 
     def _register_all_chips(self):
         try:
