@@ -19,21 +19,17 @@ STATE_FILE = Path.home() / ".config" / "ai-quota-overlay" / "state.json"
 
 CSS_DATA = b"""
 window.ai-hud-window {
-    background-color: rgba(15, 18, 25, 0.94);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background-color: #090d16;
+    border: 1px solid #334155;
     border-radius: 14px;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
 }
 
 .hud-handle {
-    background-color: rgba(255, 255, 255, 0.06);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: #0f172a;
+    border-bottom: 1px solid #1e293b;
     border-top-left-radius: 14px;
     border-top-right-radius: 14px;
-}
-
-.hud-handle:active {
-    background-color: rgba(255, 255, 255, 0.12);
 }
 
 .hud-header-inner {
@@ -42,86 +38,135 @@ window.ai-hud-window {
 
 .hud-title {
     font-size: 12px;
-    font-weight: 800;
-    color: #f8fafc;
+    font-weight: 900;
+    color: #ffffff;
     letter-spacing: 0.5px;
 }
 
 .hud-drag-hint {
-    font-size: 10px;
-    color: #64748b;
+    font-size: 11px;
+    color: #94a3b8;
     margin-left: 2px;
 }
 
-.hud-action-btn {
-    background-color: rgba(255, 255, 255, 0.08);
-    border: none;
-    color: #cbd5e1;
+/* Header Buttons */
+button.hud-action-btn {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    color: #ffffff;
     font-size: 11px;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 5px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
 }
 
-.hud-action-btn:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+button.hud-action-btn label {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+button.hud-action-btn:hover {
+    background-color: #334155;
+    border-color: #38bdf8;
+}
+
+button.hud-action-btn:hover label {
+    color: #38bdf8;
+}
+
+button.hud-action-btn-active {
+    background-color: #2563eb;
+    border: 1px solid #60a5fa;
     color: #ffffff;
 }
 
-.hud-action-btn-active {
-    background-color: rgba(59, 130, 246, 0.35);
-    color: #93c5fd;
-    border: 1px solid rgba(147, 197, 253, 0.4);
+button.hud-action-btn-active label {
+    color: #ffffff;
 }
 
-.hud-close-btn {
-    background: transparent;
+button.hud-close-btn {
+    background-color: transparent;
     border: none;
-    color: #94a3b8;
+    color: #cbd5e1;
     font-size: 13px;
-    font-weight: bold;
+    font-weight: 900;
     padding: 2px 6px;
     border-radius: 5px;
 }
 
-.hud-close-btn:hover {
-    background-color: rgba(239, 68, 68, 0.3);
-    color: #f87171;
+button.hud-close-btn label {
+    color: #cbd5e1;
+}
+
+button.hud-close-btn:hover {
+    background-color: #dc2626;
+    color: #ffffff;
+}
+
+button.hud-close-btn:hover label {
+    color: #ffffff;
 }
 
 /* Full View Cards */
 .hud-card {
-    background-color: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 8px;
-    padding: 8px 10px;
-    margin-bottom: 4px;
+    background-color: #131b2e;
+    border: 1px solid #293548;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
 }
 
 .hud-account-name {
-    font-size: 12px;
-    font-weight: 700;
-    color: #f1f5f9;
+    font-size: 13px;
+    font-weight: 800;
+    color: #ffffff;
 }
 
 .hud-badge {
-    font-size: 9px;
-    font-weight: 800;
-    padding: 1px 5px;
+    font-size: 10px;
+    font-weight: 900;
+    padding: 2px 6px;
     border-radius: 4px;
-    background-color: rgba(255, 255, 255, 0.12);
-    color: #e2e8f0;
+    background-color: #334155;
+    color: #f8fafc;
+    border: 1px solid #475569;
+}
+
+/* Usage & Detail Typography */
+.sub-label {
+    font-size: 13px;
+    font-weight: 800;
+    color: #38bdf8;
+}
+
+.warning-label {
+    font-size: 13px;
+    font-weight: 900;
+    color: #fbbf24;
+}
+
+.critical-label {
+    font-size: 13px;
+    font-weight: 900;
+    color: #f87171;
+}
+
+.dim-label {
+    font-size: 12px;
+    color: #64748b;
+    font-style: italic;
 }
 
 .hud-reset {
-    font-size: 11px;
-    font-weight: 700;
-    color: #fde047;
+    font-size: 12px;
+    font-weight: 800;
+    color: #facc15;
 }
 
 .hud-subtext {
-    font-size: 10px;
-    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+    color: #cbd5e1;
 }
 
 /* Compact Mode Styling */
@@ -130,113 +175,139 @@ window.ai-hud-window {
 }
 
 .hud-compact-row {
-    background-color: rgba(255, 255, 255, 0.04);
-    border-radius: 6px;
-    padding: 5px 8px;
+    background-color: #131b2e;
+    border: 1px solid #293548;
+    border-radius: 8px;
+    padding: 6px 10px;
     margin-bottom: 4px;
 }
 
 .hud-compact-label {
-    font-size: 11px;
-    font-weight: 700;
-    color: #f8fafc;
+    font-size: 12px;
+    font-weight: 800;
+    color: #ffffff;
 }
 
 .hud-compact-reset {
-    font-size: 10px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     color: #facc15;
 }
 
 .hud-compact-na {
-    font-size: 10px;
+    font-size: 11px;
     color: #64748b;
     font-style: italic;
 }
 
 /* Progress Bars */
-progressbar.ok trough {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-radius: 3px;
-    min-height: 6px;
+progressbar trough {
+    background-color: #1e293b;
+    border-radius: 4px;
+    min-height: 7px;
 }
+
 progressbar.ok progress {
     background-color: #22c55e;
-    border-radius: 3px;
-    min-height: 6px;
+    border-radius: 4px;
+    min-height: 7px;
 }
 
-progressbar.warning trough {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-radius: 3px;
-    min-height: 6px;
-}
 progressbar.warning progress {
     background-color: #eab308;
-    border-radius: 3px;
-    min-height: 6px;
+    border-radius: 4px;
+    min-height: 7px;
 }
 
-progressbar.critical trough {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-radius: 3px;
-    min-height: 6px;
-}
 progressbar.critical progress {
     background-color: #ef4444;
-    border-radius: 3px;
-    min-height: 6px;
+    border-radius: 4px;
+    min-height: 7px;
 }
 
 /* Settings View Styles */
 .hud-settings-box {
-    padding: 10px 14px;
-}
-.hud-settings-title {
-    font-size: 13px;
-    font-weight: 800;
-    color: #38bdf8;
-    margin-bottom: 4px;
-}
-.hud-settings-card {
-    background-color: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
     padding: 8px 10px;
-    margin-bottom: 6px;
 }
+
+.hud-settings-title {
+    font-size: 14px;
+    font-weight: 900;
+    color: #38bdf8;
+    margin-bottom: 2px;
+}
+
+.hud-settings-card {
+    background-color: #131b2e;
+    border: 1px solid #293548;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+}
+
 .hud-settings-label {
-    font-size: 11px;
-    font-weight: 700;
-    color: #e2e8f0;
+    font-size: 12px;
+    font-weight: 800;
+    color: #ffffff;
 }
+
 .hud-settings-desc {
-    font-size: 10px;
-    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 500;
+    color: #cbd5e1;
 }
-.hud-save-btn {
+
+.hud-priority-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+button.hud-save-btn {
     background-color: #2563eb;
+    border: 1px solid #3b82f6;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    border-radius: 8px;
+    padding: 8px 16px;
+    min-height: 34px;
+}
+
+button.hud-save-btn label {
+    color: #ffffff;
+    font-weight: 800;
+}
+
+button.hud-save-btn:hover {
+    background-color: #1d4ed8;
+    border-color: #60a5fa;
+}
+
+button.hud-arrow-btn {
+    background-color: #1e293b;
+    border: 1px solid #475569;
     color: #ffffff;
     font-size: 11px;
-    font-weight: 700;
-    border: none;
+    font-weight: 900;
     border-radius: 6px;
-    padding: 6px 12px;
+    padding: 3px 8px;
+    min-width: 28px;
+    min-height: 24px;
 }
-.hud-save-btn:hover {
-    background-color: #1d4ed8;
-}
-.hud-arrow-btn {
-    background-color: rgba(255, 255, 255, 0.1);
+
+button.hud-arrow-btn label {
     color: #ffffff;
-    font-size: 10px;
-    font-weight: bold;
-    border: none;
-    border-radius: 4px;
-    padding: 2px 6px;
+    font-weight: 900;
 }
-.hud-arrow-btn:hover {
-    background-color: rgba(255, 255, 255, 0.25);
+
+button.hud-arrow-btn:hover {
+    background-color: #334155;
+    border-color: #38bdf8;
+}
+
+button.hud-arrow-btn:hover label {
+    color: #38bdf8;
 }
 """
 
@@ -450,7 +521,7 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
         for idx, cid in enumerate(chain):
             row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
             r_name = Gtk.Label(label=f"{idx+1}. {names.get(cid, cid)}")
-            r_name.add_css_class("hud-settings-desc")
+            r_name.add_css_class("hud-priority-name")
             r_name.set_hexpand(True)
             r_name.set_halign(Gtk.Align.START)
             row.append(r_name)
