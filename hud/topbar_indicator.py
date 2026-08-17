@@ -28,26 +28,26 @@ from backend.quota_engine import collect_all_quotas
 def acquire_single_instance_lock(name: str):
     """Enforce strictly 1 instance running to prevent multi-screen top bar expansion."""
     lock_file = Path(f"/tmp/{name}.lock")
-    lock_fd = open(lock_file, "w")
-    try:
-        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        lock_fd.write(str(os.getpid()))
-        lock_fd.flush()
-        return lock_fd
-    except (IOError, BlockingIOError):
+    lock_fd = open(lock_file, "a+")
+    for attempt in range(6):
         try:
-            with open(lock_file, "r") as f:
-                old_pid = int(f.read().strip())
-            if old_pid != os.getpid():
-                os.kill(old_pid, 9)
-                time.sleep(0.3)
-        except Exception:
-            pass
-        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        lock_fd.seek(0)
-        lock_fd.write(str(os.getpid()))
-        lock_fd.flush()
-        return lock_fd
+            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            lock_fd.truncate(0)
+            lock_fd.write(str(os.getpid()))
+            lock_fd.flush()
+            return lock_fd
+        except (IOError, BlockingIOError):
+            try:
+                lock_fd.seek(0)
+                pid_str = lock_fd.read().strip()
+                if pid_str:
+                    old_pid = int(pid_str)
+                    if old_pid != os.getpid():
+                        os.kill(old_pid, 9)
+            except Exception:
+                pass
+            time.sleep(0.25)
+    return lock_fd
 
 # Acquire lock before anything else
 _LOCK = acquire_single_instance_lock("ai-quota-topbar")
