@@ -51,85 +51,85 @@ window.ai-hud-window {
 
 /* Base Button Styling Override */
 button {
-    background-image: none !important;
-    background-color: #1e293b !important;
-    border: 1px solid #475569 !important;
-    color: #ffffff !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    border-radius: 6px !important;
+    background-image: none;
+    background-color: #1e293b;
+    border: 1px solid #475569;
+    color: #ffffff;
+    box-shadow: none;
+    text-shadow: none;
+    border-radius: 6px;
 }
 
 button label {
-    color: #ffffff !important;
-    font-weight: 700 !important;
+    color: #ffffff;
+    font-weight: 700;
 }
 
 button:hover {
-    background-color: #334155 !important;
-    border-color: #38bdf8 !important;
+    background-color: #334155;
+    border-color: #38bdf8;
 }
 
 button:hover label {
-    color: #38bdf8 !important;
+    color: #38bdf8;
 }
 
 /* Header Buttons */
 button.hud-action-btn {
-    background-color: #1e293b !important;
-    border: 1px solid #475569 !important;
-    color: #ffffff !important;
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    padding: 3px 8px !important;
-    border-radius: 6px !important;
+    background-color: #1e293b;
+    border: 1px solid #475569;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
 }
 
 button.hud-action-btn label {
-    color: #ffffff !important;
-    font-weight: 700 !important;
+    color: #ffffff;
+    font-weight: 700;
 }
 
 button.hud-action-btn:hover {
-    background-color: #334155 !important;
-    border-color: #38bdf8 !important;
+    background-color: #334155;
+    border-color: #38bdf8;
 }
 
 button.hud-action-btn:hover label {
-    color: #38bdf8 !important;
+    color: #38bdf8;
 }
 
 button.hud-action-btn-active {
-    background-color: #2563eb !important;
-    border: 1px solid #60a5fa !important;
-    color: #ffffff !important;
+    background-color: #2563eb;
+    border: 1px solid #60a5fa;
+    color: #ffffff;
 }
 
 button.hud-action-btn-active label {
-    color: #ffffff !important;
+    color: #ffffff;
 }
 
 button.hud-close-btn {
-    background-color: transparent !important;
-    border: none !important;
-    color: #cbd5e1 !important;
-    font-size: 13px !important;
-    font-weight: 900 !important;
-    padding: 2px 6px !important;
-    border-radius: 5px !important;
+    background-color: transparent;
+    border: none;
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 5px;
 }
 
 button.hud-close-btn label {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 
 button.hud-close-btn:hover {
-    background-color: #dc2626 !important;
-    color: #ffffff !important;
+    background-color: #dc2626;
+    color: #ffffff;
 }
 
 button.hud-close-btn:hover label {
-    color: #ffffff !important;
+    color: #ffffff;
 }
 
 /* Full View Cards */
@@ -289,50 +289,50 @@ progressbar.critical progress {
 }
 
 button.hud-save-btn {
-    background-color: #2563eb !important;
-    border: 1px solid #3b82f6 !important;
-    color: #ffffff !important;
-    font-size: 12px !important;
-    font-weight: 800 !important;
-    border-radius: 8px !important;
-    padding: 8px 16px !important;
-    min-height: 34px !important;
+    background-color: #2563eb;
+    border: 1px solid #3b82f6;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    border-radius: 8px;
+    padding: 8px 16px;
+    min-height: 34px;
 }
 
 button.hud-save-btn label {
-    color: #ffffff !important;
-    font-weight: 800 !important;
+    color: #ffffff;
+    font-weight: 800;
 }
 
 button.hud-save-btn:hover {
-    background-color: #1d4ed8 !important;
-    border-color: #60a5fa !important;
+    background-color: #1d4ed8;
+    border-color: #60a5fa;
 }
 
 button.hud-arrow-btn {
-    background-color: #1e293b !important;
-    border: 1px solid #475569 !important;
-    color: #ffffff !important;
-    font-size: 11px !important;
-    font-weight: 900 !important;
-    border-radius: 6px !important;
-    padding: 3px 8px !important;
-    min-width: 28px !important;
-    min-height: 24px !important;
+    background-color: #1e293b;
+    border: 1px solid #475569;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 900;
+    border-radius: 6px;
+    padding: 3px 8px;
+    min-width: 28px;
+    min-height: 24px;
 }
 
 button.hud-arrow-btn label {
-    color: #ffffff !important;
-    font-weight: 900 !important;
+    color: #ffffff;
+    font-weight: 900;
 }
 
 button.hud-arrow-btn:hover {
-    background-color: #334155 !important;
-    border-color: #38bdf8 !important;
+    background-color: #334155;
+    border-color: #38bdf8;
 }
 
 button.hud-arrow-btn:hover label {
-    color: #38bdf8 !important;
+    color: #38bdf8;
 }
 """
 
@@ -351,12 +351,21 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
     def __init__(self, app):
         super().__init__(application=app, title="AI Quotas Overlay")
 
-        self.set_default_size(330, 440)
+        from backend.config_manager import load_config, save_config
+        self.config = load_config()
+        ui_cfg = self.config.get("ui", {})
+        self.saved_full_width = int(ui_cfg.get("window_width", 340))
+        self.saved_full_height = int(ui_cfg.get("window_height", 460))
+        self.saved_compact_width = int(ui_cfg.get("compact_width", 310))
+        self.saved_compact_height = int(ui_cfg.get("compact_height", 220))
+
+        self.set_default_size(self.saved_full_width, self.saved_full_height)
         self.set_resizable(True)
         self.set_decorated(False)
         self.add_css_class("ai-hud-window")
 
         self.is_compact = False
+        self.connect("close-request", self._on_close_save_geometry)
 
         # Main Layout Box
         self.main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -595,22 +604,62 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
         save_btn.connect("clicked", _save)
         self.settings_box.append(save_btn)
 
+    def _save_dimensions(self):
+        try:
+            from backend.config_manager import load_config, save_config
+            cfg = load_config()
+            if "ui" not in cfg:
+                cfg["ui"] = {}
+            cfg["ui"]["window_width"] = self.saved_full_width
+            cfg["ui"]["window_height"] = self.saved_full_height
+            cfg["ui"]["compact_width"] = self.saved_compact_width
+            cfg["ui"]["compact_height"] = self.saved_compact_height
+            save_config(cfg)
+        except Exception as e:
+            print("Save dimensions error:", e)
+
+    def _on_close_save_geometry(self, window):
+        w = self.get_width()
+        h = self.get_height()
+        if w > 100 and h > 100:
+            if self.is_compact:
+                self.saved_compact_width = w
+                self.saved_compact_height = h
+            else:
+                self.saved_full_width = w
+                self.saved_full_height = h
+            self._save_dimensions()
+        return False
+
     def _toggle_compact(self, btn):
+        # Save current mode dimension before swapping
+        w = self.get_width()
+        h = self.get_height()
+        if w > 100 and h > 100:
+            if self.is_compact:
+                self.saved_compact_width = w
+                self.saved_compact_height = h
+            else:
+                self.saved_full_width = w
+                self.saved_full_height = h
+            self._save_dimensions()
+
         if self.is_settings:
             self._toggle_settings(None)
+
         self.is_compact = not self.is_compact
         if self.is_compact:
             self.compact_btn.set_label("◫ Full")
             self.compact_btn.add_css_class("hud-action-btn-active")
             self.scrolled.set_visible(False)
             self.compact_box.set_visible(True)
-            self.set_default_size(310, 220)
+            self.set_default_size(self.saved_compact_width, self.saved_compact_height)
         else:
             self.compact_btn.set_label("◰ Compact")
             self.compact_btn.remove_css_class("hud-action-btn-active")
             self.compact_box.set_visible(False)
             self.scrolled.set_visible(True)
-            self.set_default_size(330, 440)
+            self.set_default_size(self.saved_full_width, self.saved_full_height)
         self.update_ui()
 
     def _on_refresh_clicked(self, btn):
@@ -621,6 +670,21 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
             print("Refresh error:", e)
 
     def update_ui(self):
+        # Track live user resize events
+        w = self.get_width()
+        h = self.get_height()
+        if w > 100 and h > 100:
+            if self.is_compact:
+                if w != self.saved_compact_width or h != self.saved_compact_height:
+                    self.saved_compact_width = w
+                    self.saved_compact_height = h
+                    self._save_dimensions()
+            else:
+                if w != self.saved_full_width or h != self.saved_full_height:
+                    self.saved_full_width = w
+                    self.saved_full_height = h
+                    self._save_dimensions()
+
         if not STATE_FILE.exists():
             return True
 
