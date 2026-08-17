@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+"""AI Smart Quota Dispatcher CLI.
+Automatically selects and launches the optimal AI coding model based on live quotas and handoff state.
+"""
+import os
+import sys
+from pathlib import Path
+
+# Add project root to sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from backend.relay_router import select_best_account, get_agent_launch_command
+from backend.handoff_manager import load_handoff_checkpoint, format_handoff_prompt
+
+
+def main():
+    args = sys.argv[1:]
+
+    # Check for --explain or --dry-run
+    dry_run = False
+    if "--dry-run" in args:
+        dry_run = True
+        args.remove("--dry-run")
+
+    best_acc, reason, candidates = select_best_account()
+    cmd, env = get_agent_launch_command(best_acc, args)
+
+    print(f"\033[1;36m[🎯 QuotaPulse Relay]\033[0m Selected \033[1;32m{best_acc.get('name')}\033[0m")
+    print(f"   Reason: {reason}")
+
+    # Check for handoff context
+    checkpoint = load_handoff_checkpoint()
+    if checkpoint:
+        print(f"\033[1;33m[🔄 Active Handoff Checkpoint]\033[0m {checkpoint.get('active_goal')} ({checkpoint.get('current_step')})")
+
+    if dry_run:
+        print(f"   Launch Command: {' '.join(cmd)}")
+        return
+
+    # Execute selected agent
+    try:
+        os.execvpe(cmd[0], cmd, env)
+    except FileNotFoundError:
+        print(f"\033[1;31m[!] Executable '{cmd[0]}' not found on PATH.\033[0m")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

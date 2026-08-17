@@ -75,6 +75,17 @@ DEFAULT_CONFIG = {
         "critical_threshold_pct": 90.0,
         "notifications_enabled": True
     },
+    "routing_policy": {
+        "strategy": "claude_first_relay",
+        "switch_threshold_pct": 3.0,
+        "recovery_threshold_pct": 20.0,
+        "fallback_chain": [
+            "claude_primary",
+            "claude_secondary",
+            "antigravity_cli",
+            "codex_primary"
+        ]
+    },
     "polling": {
         "daemon_interval_seconds": 60,
         "hud_refresh_seconds": 5

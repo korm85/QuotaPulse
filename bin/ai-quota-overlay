@@ -177,6 +177,22 @@ def main():
     # install-extension
     subparsers.add_parser("install-extension", help="Install GNOME Shell Top Bar Extension")
 
+    # route
+    subparsers.add_parser("route", help="Show intelligent routing evaluation and best candidate")
+
+    # handoff
+    handoff_p = subparsers.add_parser("handoff", help="Manage task handoff checkpoints across models")
+    handoff_sub = handoff_p.add_subparsers(dest="handoff_action", help="Handoff action")
+    
+    save_h = handoff_sub.add_parser("save", help="Save handoff checkpoint")
+    save_h.add_argument("--goal", required=True, help="Active task goal")
+    save_h.add_argument("--step", required=True, help="Current sub-step")
+    save_h.add_argument("--next", required=True, help="Immediate next action")
+    save_h.add_argument("--constraints", nargs="*", help="Key constraints or invariants")
+
+    handoff_sub.add_parser("show", help="Show active handoff checkpoint")
+    handoff_sub.add_parser("clear", help="Clear active handoff checkpoint")
+
     # hud
     subparsers.add_parser("hud", help="Launch desktop floating HUD window")
 
@@ -198,6 +214,47 @@ def main():
         print(f"[✓] Done! Summary: {state.get('summary_text')}")
     elif action == "daemon":
         run_daemon(interval_seconds=args.interval)
+    elif action == "route":
+        from backend.relay_router import select_best_account
+        best, reason, candidates = select_best_account()
+        print(f"\n{BOLD}{CYAN}=== QUOTAPULSE INTELLIGENT RELAY ROUTER ==={RESET}")
+        print(f"{DIM}Routing Policy: Claude-First Relay (Switch Threshold: {load_config().get('routing_policy', {}).get('switch_threshold_pct', 80.0)}%){RESET}\n")
+        print(f"{BOLD}{'Candidate Model':<24} {'Status':<14} {'Usage %':<10} {'Reset Countdown':<16} {'Readiness Score':<15} {'Eligible'}{RESET}")
+        print("─" * 90)
+        for c in candidates:
+            acc = c["account_data"]
+            cfg_status = acc.get("status")
+            status_str = f"{GREEN}READY{RESET}" if c["eligible"] else f"{YELLOW}SWITCH REQ{RESET}" if cfg_status != "not_configured" else f"{DIM}NOT CONFIG{RESET}"
+            elig_str = f"{GREEN}YES{RESET}" if c["eligible"] else f"{RED}NO{RESET}"
+            print(f"{c['name']:<24} {status_str:<23} {c['used_pct']:<10.1f} {c['resets_in']:<16} {c['score']:<15.1f} {elig_str}")
+        print("─" * 90)
+        print(f"\n{BOLD}{GREEN}🎯 Selected Next Target:{RESET} {BOLD}{best.get('name')}{RESET} ({best.get('service')})")
+        print(f"   {CYAN}Reason:{RESET} {reason}\n")
+    elif action == "handoff":
+        from backend.handoff_manager import save_handoff_checkpoint, load_handoff_checkpoint, get_handoff_file
+        if args.handoff_action == "save":
+            path = save_handoff_checkpoint(
+                active_goal=args.goal,
+                current_step=args.step,
+                next_action=args.next,
+                source_agent="user_cli",
+                constraints=args.constraints or []
+            )
+            print(f"{GREEN}[✓] Handoff checkpoint saved at:{RESET} {path}")
+        elif args.handoff_action == "show":
+            cp = load_handoff_checkpoint()
+            if cp:
+                print(f"\n{BOLD}{CYAN}=== ACTIVE HANDOFF CHECKPOINT ==={RESET}")
+                print(json.dumps(cp, indent=2))
+            else:
+                print(f"{DIM}No active handoff checkpoint found.{RESET}")
+        elif args.handoff_action == "clear":
+            hf = get_handoff_file()
+            if hf.exists():
+                hf.unlink()
+                print(f"{GREEN}[✓] Handoff checkpoint cleared.{RESET}")
+            else:
+                print(f"{DIM}No active handoff checkpoint to clear.{RESET}")
     elif action == "install-extension":
         install_gnome_extension()
     elif action == "topbar":

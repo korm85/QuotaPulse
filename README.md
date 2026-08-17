@@ -75,6 +75,33 @@ QuotaPulse automatically detects your active logins and tracks exact pool limits
 
 ---
 
+## 🔄 Intelligent Quota Relay Router & Task Handoff
+
+QuotaPulse includes a smart dispatcher CLI (`ai`) that automatically selects the healthiest AI model before you hit a rate limit:
+
+```bash
+ai "Your task or prompt"
+```
+
+### How it Works:
+1. **Time-Aware Relay**: Monitors 5-hour rolling pool usage and reset countdowns across your accounts.
+2. **Automatic Failover**: When your primary account reaches the threshold (e.g. 80%, or 3% in test mode), it seamlessly switches to your secondary account or backup model (`Claude 1` → `Claude 2` → `Antigravity` → `Codex`).
+3. **Loss-less Task Handoff**: Checkpoints active goals, current sub-steps, architectural invariants, and uncommitted git files to `.git/.ai-quota-handoff.json` so the new model resumes immediately without costly exploration turns.
+
+### Routing Commands:
+```bash
+# Check current candidate rankings and selected model
+ai-quota-overlay route
+
+# Save a task handoff checkpoint
+ai-quota-overlay handoff save --goal "Fix auth bug" --step "Step 2/3" --next "Run vitest"
+
+# View active handoff state
+ai-quota-overlay handoff show
+```
+
+---
+
 ## 🚀 Getting Started
 
 ### 🐧 On Linux (Ubuntu / GNOME / Wayland / X11)
