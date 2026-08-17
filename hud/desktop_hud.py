@@ -250,6 +250,32 @@ progressbar.critical progress {
     min-height: 7px;
 }
 
+/* Footer & Resize Grip Styles */
+.hud-footer-bar {
+    background-color: #0f172a;
+    border-top: 1px solid #1e293b;
+    padding: 3px 10px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+}
+
+.hud-footer-text {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.hud-resize-grip {
+    color: #94a3b8;
+    font-size: 14px;
+    font-weight: 900;
+    padding: 0 4px;
+}
+
+.hud-resize-grip:hover {
+    color: #38bdf8;
+}
+
 /* Settings View Styles */
 .hud-settings-box {
     padding: 8px 10px;
@@ -455,11 +481,59 @@ class AIQuotaHUD(Gtk.ApplicationWindow):
         self.compact_box.set_visible(False)
         self.main_box.append(self.compact_box)
 
+        # Bottom Footer Bar with Interactive Resize Grips
+        self.footer_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        self.footer_bar.add_css_class("hud-footer-bar")
+
+        footer_lbl = Gtk.Label(label="🎯 QuotaPulse")
+        footer_lbl.add_css_class("hud-footer-text")
+        footer_lbl.set_halign(Gtk.Align.START)
+        footer_lbl.set_hexpand(True)
+        self.footer_bar.append(footer_lbl)
+
+        # Bottom Edge Resize Handle
+        bottom_handle = Gtk.Box()
+        bottom_handle.set_hexpand(True)
+        self._attach_resize_gesture(bottom_handle, Gdk.SurfaceEdge.SOUTH, "s-resize")
+        self.footer_bar.append(bottom_handle)
+
+        # Bottom-Right Corner Resize Grip (◢)
+        self.resize_grip = Gtk.Label(label="◢")
+        self.resize_grip.add_css_class("hud-resize-grip")
+        self.resize_grip.set_halign(Gtk.Align.END)
+        self._attach_resize_gesture(self.resize_grip, Gdk.SurfaceEdge.SOUTH_EAST, "se-resize")
+        self.footer_bar.append(self.resize_grip)
+
+        self.main_box.append(self.footer_bar)
+
         # Load initial data
         self.update_ui()
 
         # Update timer (every 5 seconds)
         GLib.timeout_add_seconds(5, self.update_ui)
+
+    def _attach_resize_gesture(self, widget, edge, cursor_name):
+        """Attach native Wayland/X11 interactive window resizing gesture to a widget."""
+        gesture = Gtk.GestureClick.new()
+        gesture.set_button(1)
+
+        def _on_pressed(g, n_press, x, y):
+            surface = self.get_surface()
+            if surface and isinstance(surface, Gdk.Toplevel):
+                surface.begin_resize(
+                    edge,
+                    g.get_device(),
+                    1,
+                    int(x),
+                    int(y),
+                    g.get_current_event_time()
+                )
+
+        gesture.connect("pressed", _on_pressed)
+        widget.add_controller(gesture)
+
+        # Set cursor on hover
+        widget.set_cursor_from_name(cursor_name)
 
     def _toggle_settings(self, btn):
         self.is_settings = not self.is_settings
