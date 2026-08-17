@@ -12,6 +12,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 import dbus
+import fcntl
 import dbus.service
 import dbus.mainloop.glib
 from gi.repository import GLib
@@ -24,23 +25,50 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from backend.config_manager import DEFAULT_STATE_FILE
 from backend.quota_engine import collect_all_quotas
 
+def acquire_single_instance_lock(name: str):
+    """Enforce strictly 1 instance running to prevent multi-screen top bar expansion."""
+    lock_file = Path(f"/tmp/{name}.lock")
+    lock_fd = open(lock_file, "w")
+    try:
+        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        lock_fd.write(str(os.getpid()))
+        lock_fd.flush()
+        return lock_fd
+    except (IOError, BlockingIOError):
+        try:
+            with open(lock_file, "r") as f:
+                old_pid = int(f.read().strip())
+            if old_pid != os.getpid():
+                os.kill(old_pid, 9)
+                time.sleep(0.3)
+        except Exception:
+            pass
+        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        lock_fd.seek(0)
+        lock_fd.write(str(os.getpid()))
+        lock_fd.flush()
+        return lock_fd
+
+# Acquire lock before anything else
+_LOCK = acquire_single_instance_lock("ai-quota-topbar")
+
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
 ICON_DIR = Path("/tmp/ai-quota-overlay-icons")
 ICON_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def generate_chip_png(service_key: str, tag: str, pct_str: str, color_hex: str, width: int = 124, height: int = 40) -> str:
-    """Generate high-DPI crisp PNG icon file on disk for GNOME top bar."""
+def generate_chip_png(service_key: str, tag: str, pct_str: str, color_hex: str, width: int = 96, height: int = 34) -> str:
+    """Generate high-DPI crisp compact PNG icon file on disk for GNOME top bar."""
     img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
     # Rounded pill container with colored border
-    draw.rounded_rectangle([1, 2, width - 2, height - 2], radius=10, fill="#18181b", outline=color_hex, width=3)
+    draw.rounded_rectangle([1, 1, width - 2, height - 2], radius=8, fill="#18181b", outline=color_hex, width=2)
 
     # Font setup
     try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16)
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 13)
     except Exception:
         font = ImageFont.load_default()
 
@@ -51,7 +79,7 @@ def generate_chip_png(service_key: str, tag: str, pct_str: str, color_hex: str, 
 
     # Draw centered text in bright white
     x_pos = (width - w) / 2
-    y_pos = (height - h) / 2 - 2
+    y_pos = (height - h) / 2 - 1
     draw.text((x_pos, y_pos), full_text, font=font, fill="#ffffff")
 
     out_file = ICON_DIR / f"chip_{service_key}.png"

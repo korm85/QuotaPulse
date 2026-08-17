@@ -10,10 +10,38 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+import fcntl
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("GLib", "2.0")
 from gi.repository import Gtk, GLib, Gdk
+
+def acquire_single_instance_lock(name: str):
+    """Enforce strictly 1 instance running to prevent window duplication/spillover."""
+    lock_file = Path(f"/tmp/{name}.lock")
+    lock_fd = open(lock_file, "w")
+    try:
+        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        lock_fd.write(str(os.getpid()))
+        lock_fd.flush()
+        return lock_fd
+    except (IOError, BlockingIOError):
+        try:
+            with open(lock_file, "r") as f:
+                old_pid = int(f.read().strip())
+            if old_pid != os.getpid():
+                os.kill(old_pid, 9)
+                time.sleep(0.3)
+        except Exception:
+            pass
+        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        lock_fd.seek(0)
+        lock_fd.write(str(os.getpid()))
+        lock_fd.flush()
+        return lock_fd
+
+# Acquire lock before anything else
+_LOCK = acquire_single_instance_lock("ai-quota-hud")
 
 STATE_FILE = Path.home() / ".config" / "ai-quota-overlay" / "state.json"
 
