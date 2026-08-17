@@ -167,15 +167,15 @@ def collect_claude_quota(account_config: Dict[str, Any]) -> Dict[str, Any]:
             five_hour = limits.get("five_hour", {})
             local_info = m_data.get("local", {})
 
-            if "used_percentage" in five_hour and five_hour["used_percentage"] is not None:
-                used_p = float(five_hour["used_percentage"])
-                result["used_pct"] = round(used_p, 1)
-                result["remaining_pct"] = round(max(0.0, 100.0 - used_p), 1)
-
-            if "tokens_used" in five_hour and five_hour["tokens_used"] is not None:
-                result["tokens_used"] = five_hour["tokens_used"]
-            if "token_limit" in five_hour and five_hour["token_limit"] is not None:
-                result["token_limit"] = five_hour["token_limit"]
+            # 1. Used percentage: compute directly from output tokens against 386k Team ceiling
+            tok_used = five_hour.get("tokens_used") or local_info.get("tokens", {}).get("output_tokens", 0)
+            tok_limit = 386804
+            
+            used_p = (tok_used / tok_limit) * 100.0 if tok_limit > 0 else 0.0
+            result["used_pct"] = round(min(100.0, max(0.0, used_p)), 1)
+            result["remaining_pct"] = round(max(0.0, 100.0 - result["used_pct"]), 1)
+            result["tokens_used"] = tok_used
+            result["token_limit"] = tok_limit
 
             reset_epoch = five_hour.get("resets_at_epoch")
             if reset_epoch and reset_epoch > now_epoch:
