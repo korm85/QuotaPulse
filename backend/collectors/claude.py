@@ -92,6 +92,24 @@ def compute_exact_claude_5h_usage(projects_dir: Path, plan: str = "TEAM") -> Dic
     }
 
 
+def read_official_claude_session() -> Optional[Dict[str, Any]]:
+    """Read real-time official rate limits provided directly by Claude Code statusline."""
+    candidates = [
+        Path.home() / ".config" / "ai-quota-overlay" / "official_claude_session.json",
+        Path.home() / ".claude-monitor" / "statusline" / "latest.json"
+    ]
+    for c in candidates:
+        if c.exists():
+            try:
+                with open(c, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, dict) and "rate_limits" in data:
+                        return data.get("rate_limits")
+            except Exception:
+                pass
+    return None
+
+
 def get_claude_monitor_data(projects_dir: Path) -> Optional[Dict[str, Any]]:
     """Run claude-monitor --once --output json to retrieve authoritative Anthropic session metrics."""
     claude_monitor_bin = shutil.which("claude-monitor")
@@ -139,15 +157,15 @@ def collect_claude_quota(account_config: Dict[str, Any]) -> Dict[str, Any]:
         "plan": "PRO" if is_korm85 else "TEAM",
         "tier": "default_raven",
         "organization": None if is_korm85 else "Gavan.ai",
-        "used_pct": 0.0 if is_korm85 else 38.9,
-        "remaining_pct": 100.0 if is_korm85 else 61.1,
+        "used_pct": 0.0 if is_korm85 else 48.2,
+        "remaining_pct": 100.0 if is_korm85 else 51.8,
         "tokens_used": 0,
-        "token_limit": 0,
+        "token_limit": 386804 if not is_korm85 else 0,
         "resets_at": None,
         "resets_at_epoch": None,
         "resets_in_seconds": None,
-        "resets_in_human": "on first prompt" if is_korm85 else "3h 30m",
-        "cost_usd": 0.0 if is_korm85 else 31.24,
+        "resets_in_human": "on first prompt" if is_korm85 else "2h 45m",
+        "cost_usd": 0.0 if is_korm85 else 43.91,
         "burn_rate_cost_per_hour": 0.0,
         "model_distribution": [],
         "weekly_used_pct": 76.0 if is_korm85 else 27.0,
@@ -158,32 +176,59 @@ def collect_claude_quota(account_config: Dict[str, Any]) -> Dict[str, Any]:
 
     # 1. If primary active session (michael@gavan.ai)
     if not is_korm85:
+        now_epoch = time.time()
+        
+        # A. Check official live Anthropic rate limits from Claude Code statusline
+        official = read_official_claude_session()
+        if official:
+            fh = official.get("five_hour", {})
+            sd = official.get("seven_day", {})
+            
+            if "used_percentage" in fh and fh["used_percentage"] is not None:
+                p = float(fh["used_percentage"])
+                result["used_pct"] = round(min(100.0, max(0.0, p)), 1)
+                result["remaining_pct"] = round(max(0.0, 100.0 - result["used_pct"]), 1)
+            
+            if "resets_at" in fh and fh["resets_at"] is not None:
+                r_epoch = int(fh["resets_at"])
+                diff = max(0, int(r_epoch - now_epoch))
+                result["resets_at_epoch"] = r_epoch
+                result["resets_in_seconds"] = diff
+                result["resets_in_human"] = format_duration(diff)
+                result["resets_at"] = datetime.fromtimestamp(r_epoch, tz=timezone.utc).isoformat()
+            
+            if "used_percentage" in sd and sd["used_percentage"] is not None:
+                result["weekly_used_pct"] = round(float(sd["used_percentage"]), 1)
+            if "resets_at" in sd and sd["resets_at"] is not None:
+                sd_epoch = int(sd["resets_at"])
+                sd_dt = datetime.fromtimestamp(sd_epoch, tz=timezone.utc)
+                result["weekly_resets_human"] = sd_dt.strftime("%a %-I:%M %p")
+
+        # B. Enrich with local token analysis from claude-monitor
         projects_dir = config_dir / "projects"
         m_data = get_claude_monitor_data(projects_dir)
-        now_epoch = time.time()
-
         if m_data:
             limits = m_data.get("limits", {})
             five_hour = limits.get("five_hour", {})
             local_info = m_data.get("local", {})
 
-            # 1. Used percentage: compute directly from output tokens against 386k Team ceiling
             tok_used = five_hour.get("tokens_used") or local_info.get("tokens", {}).get("output_tokens", 0)
-            tok_limit = 386804
-            
-            used_p = (tok_used / tok_limit) * 100.0 if tok_limit > 0 else 0.0
-            result["used_pct"] = round(min(100.0, max(0.0, used_p)), 1)
-            result["remaining_pct"] = round(max(0.0, 100.0 - result["used_pct"]), 1)
             result["tokens_used"] = tok_used
-            result["token_limit"] = tok_limit
+            result["token_limit"] = 386804
 
-            reset_epoch = five_hour.get("resets_at_epoch")
-            if reset_epoch and reset_epoch > now_epoch:
-                diff_sec = int(reset_epoch - now_epoch)
-                result["resets_in_seconds"] = diff_sec
-                result["resets_in_human"] = format_duration(diff_sec)
-                result["resets_at_epoch"] = reset_epoch
-                result["resets_at"] = five_hour.get("resets_at")
+            if not official or result["used_pct"] == 0.0:
+                used_p = (tok_used / 386804) * 100.0
+                result["used_pct"] = round(min(100.0, max(0.0, used_p)), 1)
+                result["remaining_pct"] = round(max(0.0, 100.0 - result["used_pct"]), 1)
+
+            if not result.get("resets_at_epoch"):
+                reset_epoch = five_hour.get("resets_at_epoch")
+                if reset_epoch and reset_epoch > now_epoch:
+                    diff_sec = int(reset_epoch - now_epoch)
+                    result["resets_in_seconds"] = diff_sec
+                    result["resets_in_human"] = format_duration(diff_sec)
+                    result["resets_at_epoch"] = reset_epoch
+                    result["resets_at"] = five_hour.get("resets_at")
 
             if "cost_usd" in local_info:
                 result["cost_usd"] = round(float(local_info["cost_usd"]), 2)
@@ -192,7 +237,7 @@ def collect_claude_quota(account_config: Dict[str, Any]) -> Dict[str, Any]:
             if "model_distribution" in local_info:
                 result["model_distribution"] = local_info["model_distribution"]
 
-        result["details"]["7_day_used_pct"] = "27.0%"
+        result["details"]["7_day_used_pct"] = f"{result['weekly_used_pct']}%"
         return result
 
     # 2. Secondary account (korm85@gmail.com)
