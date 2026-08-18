@@ -239,6 +239,9 @@ def main():
     subparsers.add_parser("install-autostart", help="Install GNOME desktop autostart entry")
     subparsers.add_parser("uninstall-autostart", help="Remove GNOME desktop autostart entry")
 
+    # diagnose
+    subparsers.add_parser("diagnose", help="Run automated self-diagnostic and drift prevention tests")
+
     args = parser.parse_args()
     action = args.command
 
@@ -329,6 +332,23 @@ X-GNOME-Autostart-enabled=true
             print(f"{GREEN}[✓] Removed autostart entry:{RESET} {desktop_file}")
         else:
             print(f"{DIM}No autostart entry found.{RESET}")
+    elif action == "diagnose":
+        from backend.diagnostics import run_comprehensive_diagnostics
+        passed, findings = run_comprehensive_diagnostics()
+        print(f"\n{BOLD}{CYAN}=== QUOTAPULSE SELF-DIAGNOSTIC SUITE ==={RESET}\n")
+        for f in findings:
+            if "[PASS]" in f:
+                print(f"  {GREEN}{f}{RESET}")
+            elif "[FAIL]" in f:
+                print(f"  {RED}{BOLD}{f}{RESET}")
+            else:
+                print(f"  {YELLOW}{f}{RESET}")
+        print()
+        if passed:
+            print(f"{BOLD}{GREEN}🎯 All Diagnostic Invariants Passed (0 Drift Detected){RESET}\n")
+        else:
+            print(f"{BOLD}{RED}💥 Diagnostic Invariants Failed — Action Required{RESET}\n")
+            sys.exit(1)
     else:
         parser.print_help()
 
