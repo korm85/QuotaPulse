@@ -268,6 +268,14 @@ def collect_claude_quota(account_config: Dict[str, Any]) -> Dict[str, Any]:
             result["resets_in_seconds"] = diff
             result["resets_in_human"] = format_duration(diff)
             result["resets_at"] = datetime.fromtimestamp(r_epoch, tz=timezone.utc).isoformat()
+        else:
+            # Window has elapsed and rolled over to 0%
+            result["used_pct"] = 0.0
+            result["remaining_pct"] = 100.0
+            result["resets_in_human"] = "on first prompt"
+            result["resets_at_epoch"] = None
+            result["resets_at"] = None
+
         if "used_percentage" in sd and sd["used_percentage"] is not None:
             result["weekly_used_pct"] = round(float(sd["used_percentage"]), 1)
             result["details"]["7_day_used_pct"] = f"{result['weekly_used_pct']}%"

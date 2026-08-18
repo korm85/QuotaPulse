@@ -235,6 +235,10 @@ def main():
     # topbar
     subparsers.add_parser("topbar", help="Launch Top Bar taskbar indicator")
 
+    # autostart
+    subparsers.add_parser("install-autostart", help="Install GNOME desktop autostart entry")
+    subparsers.add_parser("uninstall-autostart", help="Remove GNOME desktop autostart entry")
+
     args = parser.parse_args()
     action = args.command
 
@@ -302,6 +306,29 @@ def main():
         hud_script = PROJECT_ROOT / "hud" / "desktop_hud.py"
         subprocess.Popen([sys.executable, str(hud_script)])
         print("[✓] Desktop HUD launched!")
+    elif action == "install-autostart":
+        autostart_dir = Path.home() / ".config" / "autostart"
+        autostart_dir.mkdir(parents=True, exist_ok=True)
+        desktop_file = autostart_dir / "quotapulse.desktop"
+        desktop_content = f"""[Desktop Entry]
+Type=Application
+Name=QuotaPulse
+Comment=AI Quota & Rate Limit Top Bar Chips
+Exec={sys.executable} {PROJECT_ROOT}/hud/topbar_indicator.py
+Terminal=false
+Categories=Utility;System;
+X-GNOME-Autostart-enabled=true
+"""
+        with open(desktop_file, "w", encoding="utf-8") as f:
+            f.write(desktop_content)
+        print(f"{GREEN}[✓] Installed autostart entry at:{RESET} {desktop_file}")
+    elif action == "uninstall-autostart":
+        desktop_file = Path.home() / ".config" / "autostart" / "quotapulse.desktop"
+        if desktop_file.exists():
+            desktop_file.unlink()
+            print(f"{GREEN}[✓] Removed autostart entry:{RESET} {desktop_file}")
+        else:
+            print(f"{DIM}No autostart entry found.{RESET}")
     else:
         parser.print_help()
 

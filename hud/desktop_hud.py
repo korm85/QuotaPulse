@@ -14,7 +14,8 @@ import fcntl
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("GLib", "2.0")
-from gi.repository import Gtk, GLib, Gdk
+gi.require_version("Gio", "2.0")
+from gi.repository import Gtk, GLib, Gdk, Gio
 
 def acquire_single_instance_lock(name: str):
     """Enforce strictly 1 instance running to prevent window duplication/spillover."""
@@ -594,8 +595,16 @@ class DesktopHUDWindow(Gtk.Window):
         # Load initial data
         self.update_ui()
 
-        # Update timer (every 5 seconds)
-        GLib.timeout_add_seconds(5, self.update_ui)
+        # Update timer (fallback polling every 10 seconds)
+        GLib.timeout_add_seconds(10, self.update_ui)
+
+        # Inotify Instant Event Monitor: 0ms latency update on quota change
+        try:
+            state_gfile = Gio.File.new_for_path(str(STATE_FILE))
+            self.file_monitor = state_gfile.monitor_file(Gio.FileMonitorFlags.NONE, None)
+            self.file_monitor.connect("changed", lambda m, f, o, et: GLib.idle_add(self.update_ui))
+        except Exception as e:
+            print("File monitor setup note:", e)
 
     def _attach_resize_gesture(self, widget, edge, cursor_name):
         """Attach native Wayland/X11 interactive window resizing gesture to a widget."""

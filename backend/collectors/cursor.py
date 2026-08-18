@@ -44,7 +44,7 @@ def extract_cursor_auth(db_path: Path) -> tuple:
     plan = "PRO"
 
     try:
-        conn = sqlite3.connect(str(db_path), timeout=2.0)
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=2.0)
         cur = conn.cursor()
         
         # Query auth items
