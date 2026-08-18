@@ -59,7 +59,22 @@ ICON_DIR = Path("/tmp/ai-quota-overlay-icons")
 ICON_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def generate_chip_png(service_key: str, tag: str, pct_str: str, color_hex: str, width: int = 96, height: int = 34) -> str:
+def pil_to_dbus_pixmap(img: Image.Image) -> dbus.Array:
+    """Convert PIL RGBA image to StatusNotifierItem IconPixmap (iiay) ARGB format in network byte order."""
+    width, height = img.size
+    rgba_bytes = img.tobytes()
+    argb_bytes = bytearray(width * height * 4)
+    for i in range(0, len(rgba_bytes), 4):
+        argb_bytes[i] = rgba_bytes[i + 3]
+        argb_bytes[i + 1] = rgba_bytes[i]
+        argb_bytes[i + 2] = rgba_bytes[i + 1]
+        argb_bytes[i + 3] = rgba_bytes[i + 2]
+    
+    struct_elem = dbus.Struct((dbus.Int32(width), dbus.Int32(height), dbus.ByteArray(argb_bytes)), signature="(iiay)")
+    return dbus.Array([struct_elem], signature="(iiay)")
+
+
+def generate_chip_png(service_key: str, tag: str, pct_str: str, color_hex: str, width: int = 96, height: int = 34):
     """Generate high-DPI crisp compact PNG icon file on disk for GNOME top bar."""
     img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
@@ -83,9 +98,12 @@ def generate_chip_png(service_key: str, tag: str, pct_str: str, color_hex: str, 
     y_pos = (height - h) / 2 - 1
     draw.text((x_pos, y_pos), full_text, font=font, fill="#ffffff")
 
-    out_file = ICON_DIR / f"chip_{service_key}.png"
+    clean_pct = pct_str.replace("%", "").strip()
+    icon_base = f"chip_{service_key}_{clean_pct}"
+    out_file = ICON_DIR / f"{icon_base}.png"
     img.save(out_file)
-    return f"chip_{service_key}"
+    pixmap = pil_to_dbus_pixmap(img)
+    return icon_base, pixmap
 
 
 class ChipDBusMenu(dbus.service.Object):
@@ -160,6 +178,7 @@ class SingleChipIndicator(dbus.service.Object):
         self.dbus_menu = ChipDBusMenu(self.bus, self.menu_path, self)
 
         self.icon_name = "utilities-system-monitor"
+        self.icon_pixmap = dbus.Array([], signature="(iiay)")
         self.action_map = {}
         self.update_chip()
 
@@ -177,6 +196,7 @@ class SingleChipIndicator(dbus.service.Object):
                 "Status": "Active",
                 "WindowId": dbus.Int32(0),
                 "IconName": self.icon_name,
+                "IconPixmap": self.icon_pixmap,
                 "IconThemePath": str(ICON_DIR),
                 "OverlayIconName": "",
                 "AttentionIconName": "dialog-warning",
@@ -241,7 +261,7 @@ class SingleChipIndicator(dbus.service.Object):
             border_color = "#64748b"
 
         pct_label = f"{int(max_used)}%" if accounts else "OFF"
-        self.icon_name = generate_chip_png(self.service_key, self.icon_tag, pct_label, border_color)
+        self.icon_name, self.icon_pixmap = generate_chip_png(self.service_key, self.icon_tag, pct_label, border_color)
 
         try:
             self.NewIcon()
