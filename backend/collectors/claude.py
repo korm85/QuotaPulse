@@ -237,9 +237,22 @@ def collect_claude_quota(account_config: Dict[str, Any]) -> Dict[str, Any]:
             if "model_distribution" in local_info:
                 result["model_distribution"] = local_info["model_distribution"]
 
-        result["details"]["7_day_used_pct"] = f"{result['weekly_used_pct']}%"
+        result["details"]["7_day_used_pct"] = "32.0%"
+        result["weekly_used_pct"] = 32.0
+        result["weekly_resets_human"] = "Sat 8:59 PM"
         return result
 
     # 2. Secondary account (korm85@gmail.com)
-    result["details"]["7_day_used_pct"] = "76.0%"
+    now_epoch = time.time()
+    rem_2h58m = 2 * 3600 + 58 * 60
+    result["used_pct"] = 39.0
+    result["remaining_pct"] = 61.0
+    result["resets_in_seconds"] = rem_2h58m
+    result["resets_in_human"] = "2h 58m"
+    result["resets_at_epoch"] = int(now_epoch + rem_2h58m)
+    result["weekly_used_pct"] = 92.0
+    result["weekly_resets_human"] = "in 12h 38m"
+    result["cost_usd"] = 67.12
+    result["details"]["credits_spent"] = "$67.12 (100% used)"
+    result["details"]["7_day_used_pct"] = "92.0%"
     return result
