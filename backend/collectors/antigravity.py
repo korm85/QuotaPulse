@@ -197,12 +197,6 @@ def collect_antigravity_quota(account_config: Dict[str, Any]) -> Dict[str, Any]:
         result["resets_in_human"] = format_duration(rem_secs)
         result["resets_at_epoch"] = int(now_epoch + rem_secs)
         result["resets_at"] = datetime.fromtimestamp(now_epoch + rem_secs, tz=timezone.utc).isoformat()
-    else:
-        result["used_pct"] = 0.0
-        result["remaining_pct"] = 100.0
-        result["status"] = "idle"
-        result["resets_in_human"] = "rolling 5h"
-        result["resets_at_epoch"] = int(now_epoch + 18000)
-        result["resets_at"] = datetime.fromtimestamp(now_epoch + 18000, tz=timezone.utc).isoformat()
-
+    from backend.account_store import save_account_state
+    save_account_state(account_id, result)
     return result

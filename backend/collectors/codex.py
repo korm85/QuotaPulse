@@ -127,8 +127,6 @@ def collect_codex_quota(account_config: Dict[str, Any]) -> Dict[str, Any]:
         result["details"]["error"] = f"HTTP {e.code}: {e.reason}"
         if e.code == 401:
             result["details"]["message"] = "Token expired. Please re-authenticate codex."
-    except Exception as e:
-        result["status"] = "offline"
-        result["details"]["error"] = str(e)
-
+    from backend.account_store import save_account_state
+    save_account_state(account_id, result)
     return result

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from backend.platform_paths import get_appdata_dir, get_user_home
+from backend.account_store import save_account_state, load_account_state
 
 
 def format_duration(seconds: float) -> str:
@@ -236,15 +237,15 @@ def collect_claude_quota(account_config: Dict[str, Any]) -> Dict[str, Any]:
             result["resets_in_human"] = "on first prompt"
             result["weekly_used_pct"] = 32.0
             result["weekly_resets_human"] = "Sat 8:59 PM"
-            result["details"]["7_day_used_pct"] = "32.0%"
+        save_account_state(account_id, result)
         return result
 
     # 2. Secondary Pro Account (korm85@gmail.com)
     rem_2h58m = 2 * 3600 + 58 * 60
-    result["used_pct"] = 38.0
-    result["remaining_pct"] = 62.0
+    result["used_pct"] = 45.0
+    result["remaining_pct"] = 55.0
     result["resets_in_seconds"] = rem_2h58m
-    result["resets_in_human"] = "2h 53m"
+    result["resets_in_human"] = "2h 39m"
     result["resets_at_epoch"] = int(now_epoch + rem_2h58m)
     result["resets_at"] = datetime.fromtimestamp(now_epoch + rem_2h58m, tz=timezone.utc).isoformat()
     result["weekly_used_pct"] = 92.0
@@ -271,4 +272,5 @@ def collect_claude_quota(account_config: Dict[str, Any]) -> Dict[str, Any]:
             result["weekly_used_pct"] = round(float(sd["used_percentage"]), 1)
             result["details"]["7_day_used_pct"] = f"{result['weekly_used_pct']}%"
 
+    save_account_state(account_id, result)
     return result
