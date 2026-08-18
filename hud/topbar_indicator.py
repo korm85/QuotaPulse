@@ -12,10 +12,11 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 import dbus
+import threading
 import fcntl
 import dbus.service
 import dbus.mainloop.glib
-from gi.repository import GLib
+from gi.repository import GLib, Gio
 
 # Add project root to sys.path
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -346,8 +347,38 @@ class MultiChipManager:
 
         self._register_all_chips()
 
-        # Update every 5 seconds
+        # Inotify Instant Event Monitor: 0ms update whenever state.json changes
+        try:
+            state_gfile = Gio.File.new_for_path(str(DEFAULT_STATE_FILE))
+            self.file_monitor = state_gfile.monitor_file(Gio.FileMonitorFlags.NONE, None)
+            self.file_monitor.connect("changed", lambda m, f, o, et: GLib.idle_add(self._on_state_file_changed))
+        except Exception as e:
+            print("Topbar file monitor note:", e)
+
+        # Fallback periodic UI check every 5 seconds
         GLib.timeout_add_seconds(5, self._periodic_update)
+
+        # Background active quota collector thread (keeps state.json perpetually fresh every 30s)
+        self.collector_thread = threading.Thread(target=self._background_collector_worker, daemon=True)
+        self.collector_thread.start()
+
+    def _background_collector_worker(self):
+        """Periodically refresh quotas across all models in background without UI freeze."""
+        # Initial sleep 2s to allow fast startup
+        time.sleep(2)
+        while True:
+            try:
+                from backend.quota_engine import collect_all_quotas
+                collect_all_quotas()
+                GLib.idle_add(self._on_state_file_changed)
+            except Exception as e:
+                print("Background collection note:", e)
+            time.sleep(30)
+
+    def _on_state_file_changed(self):
+        self._load_state()
+        for chip in self.chips:
+            chip.update_chip()
 
     def turn_off_all(self):
         try:
@@ -380,9 +411,7 @@ class MultiChipManager:
 
     def force_refresh(self):
         collect_all_quotas()
-        self._load_state()
-        for chip in self.chips:
-            chip.update_chip()
+        self._on_state_file_changed()
 
     def _periodic_update(self):
         self._load_state()
