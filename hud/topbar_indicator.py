@@ -74,17 +74,23 @@ def pil_to_dbus_pixmap(img: Image.Image) -> dbus.Array:
     return dbus.Array([struct_elem], signature="(iiay)")
 
 
-def generate_chip_png(service_key: str, tag: str, pct_str: str, color_hex: str, width: int = 96, height: int = 34):
-    """Generate high-DPI crisp compact PNG icon file on disk for GNOME top bar."""
+def generate_chip_png(service_key: str, tag: str, pct_str: str, color_hex: str, width: int = 114, height: int = 36):
+    """Generate ultra-crisp, high-contrast, bold chip icon for GNOME top bar."""
     img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
-    # Rounded pill container with colored border
-    draw.rounded_rectangle([1, 1, width - 2, height - 2], radius=8, fill="#18181b", outline=color_hex, width=2)
+    # High-contrast dark container with thick 3px vibrant border
+    bg_fill = "#09090b"
+    if color_hex == "#ef4444":
+        bg_fill = "#2e0808"
+    elif color_hex == "#f59e0b":
+        bg_fill = "#2e1a05"
 
-    # Font setup
+    draw.rounded_rectangle([1, 1, width - 2, height - 2], radius=10, fill=bg_fill, outline=color_hex, width=3)
+
+    # Large bold typography
     try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 13)
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 18)
     except Exception:
         font = ImageFont.load_default()
 
@@ -93,9 +99,9 @@ def generate_chip_png(service_key: str, tag: str, pct_str: str, color_hex: str, 
     w = bbox[2] - bbox[0]
     h = bbox[3] - bbox[1]
 
-    # Draw centered text in bright white
+    # Center text with subpixel precision
     x_pos = (width - w) / 2
-    y_pos = (height - h) / 2 - 1
+    y_pos = (height - h) / 2 - 2
     draw.text((x_pos, y_pos), full_text, font=font, fill="#ffffff")
 
     clean_pct = pct_str.replace("%", "").strip()
