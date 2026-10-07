@@ -1,27 +1,7 @@
-# Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-.venv/
-
-# State & Local Data
-state.json
-alerts_history.json
-*.log
-/tmp/
-
-# Build & Dist
+*.pyc
+*.egg-info/
 build/
 dist/
-*.spec
-*.zip
-
-# OS & Editor
-.DS_Store
-.vscode/
-.idea/
-Thumbs.db
+.venv/
+*.db

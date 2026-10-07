@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quotapulse"
+version = "0.1.0"
+description = "Track AI usage quotas locally and forecast when you'll hit a limit."
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+quotapulse = "quotapulse.cli:main"
